@@ -17,6 +17,7 @@ The name comes from our beloved dog's nickname. The heart shape in the logo is t
 - **Artist Knowledge System** — Reference artists and genres to guide the AI's creative decisions
 - **Conversation History** — Pick up where you left off with persistent chat sessions
 - **Studio Setup Profiles** — Tell Hipare about your gear and workflow for more relevant suggestions
+- **Finnish & English UI** — Switch interface language from settings
 
 ## Prerequisites
 
@@ -26,41 +27,36 @@ The name comes from our beloved dog's nickname. The heart shape in the logo is t
 - **REAPER 7+** — [Download](https://www.reaper.fm/)
 - At least one API key (Groq is free to start)
 
-## Installation
+## Installation (step by step)
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/YOUR_USERNAME/hipare.git
-   cd hipare
-   ```
+### Step 1 — Clone the repository
 
-2. **Install Node.js dependencies**
-   ```bash
-   npm install
-   ```
+```bash
+git clone https://github.com/Hipare/Hipare-Reaper-agent.git
+cd Hipare-Reaper-agent
+```
 
-3. **Install Python dependencies**
-   ```bash
-   pip install flask flask-cors
-   ```
+### Step 2 — Install Node.js dependencies
 
-4. **Set up environment variables**
-   ```bash
-   cp .env.example .env
-   ```
-   Open `.env` in your editor and add your API keys (see [Configuration](#configuration)).
+```bash
+npm install
+```
 
-5. **Install REAPER MCP scripts**
-   - Copy the MCP bridge scripts from `total-reaper-mcp/` to your REAPER Scripts folder
-   - The default location is: `%APPDATA%\REAPER\Scripts\mcp_bridge_data\`
-   - See the `total-reaper-mcp` directory for detailed setup instructions
+### Step 3 — Install Python dependencies
 
-## Configuration
+```bash
+pip install flask flask-cors
+```
 
-Edit your `.env` file with at least one API key:
+### Step 4 — Set up API keys
+
+```bash
+cp .env.example .env
+```
+
+Open `.env` in any text editor (Notepad works) and add at least one API key:
 
 ```env
-# At least one API key is required
 GROQ_API_KEY=your_groq_api_key_here
 GOOGLE_API_KEY=your_google_api_key_here
 OPENROUTER_API_KEY=your_openrouter_api_key_here
@@ -72,44 +68,73 @@ OPENROUTER_API_KEY=your_openrouter_api_key_here
 | `GOOGLE_API_KEY` | [aistudio.google.com](https://aistudio.google.com/apikey) | Gemini models, good for complex tasks |
 | `OPENROUTER_API_KEY` | [openrouter.ai](https://openrouter.ai/keys) | Access to many models, pay-per-use |
 
-See `.env.example` for all available configuration options.
+### Step 5 — Set up REAPER Lua bridge
 
-## Usage
+This is the critical step that connects Hipare to REAPER:
 
-1. **Start REAPER** and make sure a project is open
-
-2. **Start the Python bridge** (connects to REAPER):
-   ```bash
-   python reaper_bridge.py
+1. **Open REAPER**
+2. Go to **Actions → Show action list**
+3. Click **"Load..."** in the bottom left
+4. Navigate to the Hipare project folder and select:
    ```
-
-3. **Start Hipare** (in a separate terminal):
-   ```bash
-   npm start
+   total-reaper-mcp/total-reaper-mcp-main/lua/mcp_bridge.lua
    ```
+5. Click **"Run/Close"**
+6. You should see in REAPER's console: **"REAPER MCP Bridge started"**
 
-4. **Open your browser** and go to:
-   ```
-   http://localhost:3002
-   ```
+> **💡 Tip:** You need to run this Lua script every time you restart REAPER. You can add it to REAPER's startup actions to automate this — see REAPER documentation on "SWS Auto-start actions".
 
-5. **Start chatting!** Try something like:
-   - *"Create a new track with a compressor and EQ"*
-   - *"Add a hip-hop drum pattern at 90 BPM"*
-   - *"What effects are on track 1?"*
-   - *"Make it sound like a lo-fi beat"*
+### Step 6 — Start the MCP server
 
-### Development Mode
+Open a terminal in the project folder:
 
-For auto-reload during development:
 ```bash
-npm run dev
+python -m total-reaper-mcp.total-reaper-mcp-main.server.app
 ```
+
+### Step 7 — Start Hipare
+
+Open another terminal in the project folder:
+
+```bash
+node server.js
+```
+
+### Step 8 — Open Hipare
+
+Open your browser and go to:
+
+```
+http://localhost:3002
+```
+
+The onboarding wizard will guide you through the first-time setup.
+
+## Quick start checklist
+
+- [ ] Node.js installed
+- [ ] Python installed
+- [ ] REAPER open with a project
+- [ ] Lua bridge running in REAPER (Step 5)
+- [ ] MCP server running (Step 6)
+- [ ] Hipare server running (Step 7)
+- [ ] Browser open at localhost:3002
+
+## Desktop App (optional)
+
+If you want to run Hipare as a desktop application instead of in a browser, you need [Rust](https://rustup.rs/) installed. Then:
+
+```bash
+cd src-tauri
+cargo tauri build
+```
+
+Pre-built Windows installers are available on the [Releases](https://github.com/Hipare/Hipare-Reaper-agent/releases) page. Note: the desktop app still requires Node.js and the server running in the background.
 
 ## Project Structure
 
 ```
-hipare/
+Hipare-Reaper-agent/
 ├── server.js              # Main Express server & AI logic
 ├── reaper_bridge.py       # Python bridge for REAPER communication
 ├── audio_analyzer.py      # Audio analysis module
@@ -117,10 +142,15 @@ hipare/
 ├── .env.example           # Environment variable template
 ├── public/                # Frontend web interface
 │   ├── index.html
+│   ├── locales/           # Finnish & English translations
 │   ├── css/
 │   └── js/
 ├── knowledge/             # Artist & genre reference data
-├── total-reaper-mcp/      # MCP bridge implementation
+├── total-reaper-mcp/      # MCP bridge & Lua scripts for REAPER
+│   └── total-reaper-mcp-main/
+│       └── lua/
+│           └── mcp_bridge.lua  ← This runs inside REAPER
+├── src-tauri/             # Tauri desktop app (optional)
 └── LICENSES/              # Third-party licenses
 ```
 
