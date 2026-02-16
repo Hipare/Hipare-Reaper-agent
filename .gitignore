@@ -1,0 +1,40 @@
+# Environment & secrets
+.env
+
+# Dependencies
+node_modules/
+
+# Database
+hipare.db
+*.db
+
+# Bridge data
+bridge_data/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+env/
+.venv/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+*.tmp
+*.temp
+tmpclaude-*

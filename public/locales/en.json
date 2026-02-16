@@ -1,0 +1,177 @@
+{
+  "app": {
+    "title": "Hipare - Reaper AI Agent",
+    "version_loaded": "Hipare v1.0 MCP Edition loaded"
+  },
+  "sidebar": {
+    "hipare": "Hipare",
+    "conversations": "Conversations",
+    "vst_plugins": "VST Plugins",
+    "studio_setup": "Studio Setup",
+    "settings": "Settings",
+    "new_chat": "+ New Conversation",
+    "select_conversation": "Select a conversation"
+  },
+  "quick_commands": {
+    "title": "Quick Commands",
+    "new_track": "Create new track",
+    "new_track_short": "+ Track",
+    "show_tracks": "Show all tracks",
+    "tracks_short": "Tracks",
+    "play": "Start playback",
+    "play_short": "Play",
+    "stop": "Stop playback",
+    "stop_short": "Stop",
+    "save": "Save project",
+    "save_short": "Save"
+  },
+  "input": {
+    "placeholder": "Write a message...",
+    "analyze_placeholder": "🎧 Analyze: ask or command..."
+  },
+  "buttons": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "skip": "Skip",
+    "continue": "Continue →",
+    "start": "Start",
+    "delete": "Delete",
+    "rename": "Rename",
+    "save_and_close": "Save and close",
+    "send": "Send"
+  },
+  "genres": {
+    "title": "Change Genres",
+    "select_title": "Select Genres",
+    "description": "Select genres. The more precisely you narrow down, the better AI can utilize the information. You can select all or none.",
+    "updated": "Genres updated:",
+    "no_selections": "no selections",
+    "update_failed": "Genre update failed",
+    "start_without": "Start without selection"
+  },
+  "settings": {
+    "title": "Settings",
+    "tab_ai": "AI Models",
+    "tab_connection": "Connection",
+    "tab_apikeys": "API Keys",
+    "tab_language": "Language",
+    "models_description": "Select 1-5 models to show in the menu. Models require API keys (.env).",
+    "search_models": "🔍 Search models...",
+    "filter_all": "All",
+    "filter_free": "✅ Free",
+    "filter_toolcall": "🔧 Tool Calling",
+    "filter_favorites": "⭐ Favorites",
+    "filter_selected": "🎯 Selected",
+    "bridge_dir_hint": "Directory where MCP and Lua-bridge communicate via JSON files.",
+    "profile_auto": "Automatic - selected by AI",
+    "profile_dsl": "DSL Production - recommended for most AIs",
+    "profile_minimal": "DSL Minimal - simple commands only",
+    "profile_groq": "Groq Essential - lightweight, Groq models limit 128 tools",
+    "profile_hint": "Automatic selects the profile based on active AI. DSL Production works for most.",
+    "reaper_bridge_title": "Reaper Bridge",
+    "open_reaper": "Open REAPER",
+    "load_bridge": "\"Load...\" → select mcp_bridge.lua",
+    "press_run": "Press \"Run/Close\"",
+    "check_console": "Check console: \"REAPER MCP Bridge started\"",
+    "testing_mcp": "Testing MCP connection...",
+    "no_connection": "No connection:",
+    "api_keys_title": "API Keys Management",
+    "api_keys_hint": "API keys are stored in the .env file. Changes require a server restart.",
+    "save_api_keys": "Save API Keys",
+    "api_keys_saved": "API keys saved! Restart Hipare for changes to take effect.",
+    "api_keys_save_failed": "API key saving failed:",
+    "api_keys_status_failed": "API key status loading failed:",
+    "api_key_set": "✅ Set",
+    "api_key_missing": "❌ Missing",
+    "provider_groq_hint": "Free. Register:",
+    "provider_google_hint": "Free tier. Register:",
+    "provider_openrouter_hint": "Free and paid models. Register:",
+    "setup_step_1": "1. Register on the service page of your choice",
+    "setup_step_2": "2. Create an API key from the service settings",
+    "setup_step_3": "3. Copy the key here and save",
+    "setup_step_4": "4. Restart Hipare (close and reopen)",
+    "setup_step_5": "5. New models will appear in the AI Models tab",
+    "select_model_error": "Select at least one model or enter an API key.",
+    "enter_api_key_error": "Enter at least one API key.",
+    "models_load_failed": "Model loading failed. Check API keys.",
+    "no_models_available": "No models available. Check API keys in the .env file.",
+    "error_in_settings": "Error in settings:",
+    "language_title": "Language / Kieli",
+    "language_hint": "",
+    "language_fi": "Suomi",
+    "language_en": "English"
+  },
+  "models": {
+    "price_free": "✅ FREE",
+    "price_cheap": "💰 Cheap",
+    "price_mid": "💰💰 Mid-range",
+    "price_expensive": "💰💰💰 Expensive",
+    "quality_excellent": "Excellent",
+    "quality_good": "Good",
+    "quality_working": "Working",
+    "quality_basic": "Basic",
+    "quality_unknown": "Unknown"
+  },
+  "vst": {
+    "title": "VST Plugins",
+    "search_placeholder": "Search plugins...",
+    "plugins_found": "plugins found",
+    "no_plugins": "No plugins."
+  },
+  "studio": {
+    "title": "Studio Setup",
+    "description": "Describe your equipment - mics, instruments, audio interface, etc.",
+    "placeholder": "E.g.: Shure SM7B, Focusrite 2i2..."
+  },
+  "analyze": {
+    "toggle_title": "Analyze audio (toggle)",
+    "mode_on": "Analyze mode ON",
+    "label": "Analyze audio"
+  },
+  "context_menu": {
+    "rename": "Rename",
+    "delete": "Delete",
+    "clear": "Clear conversation",
+    "locked": "Locked"
+  },
+  "status": {
+    "connected": "Connected ✓",
+    "disconnected": "Not connected ✗",
+    "connecting": "Connecting...",
+    "menu": "Menu"
+  },
+  "errors": {
+    "unknown": "Unknown error",
+    "creation_failed": "Creation failed:",
+    "clearing_failed": "Clearing failed:",
+    "generic": "Error:"
+  },
+  "onboarding": {
+    "step1_title": "Welcome to Hipare! 🎵",
+    "step1_description": "Hipare needs at least one API key to work. You can add more later from settings.",
+    "api_key_label": "API Key",
+    "api_key_placeholder": "Paste API key here...",
+    "provider_label": "Provider",
+    "add_key": "+ Add key",
+    "key_empty_error": "Enter an API key first",
+    "key_added": "added",
+    "step2_title": "Tell us about your studio 🎧",
+    "step2_description": "AI will consider your equipment and instruments in the conversation. You can update details later from settings.",
+    "step2_placeholder": "E.g.: Focusrite Scarlett 2i2, Shure SM7B, Audio-Technica ATH-M50x, Yamaha HS8, Arturia MiniLab...",
+    "step3_title": "Choose default model 🤖",
+    "step3_has_keys": "Select 1–5 AIs. You can change your selection later from settings.",
+    "step3_no_keys": "No API keys entered — you can add them later from settings.",
+    "step4_text_1": "Hipare was born from a passion for music and a desire to make production easier for everyone.",
+    "step4_text_2": "The name comes from the nickname of our beloved dog. The heart shape in the icon is the shape of the heart marking on our Hippu's nose. 🐕",
+    "step4_text_3": "Hipare's purpose is not to create finished art or replace artists or studio professionals. Its purpose is to help create what would otherwise remain uncreated — and to help people focus on their passion.",
+    "coffee_text": "☕ Donations enable further development of Hipare",
+    "start_using": "Start using 🎵",
+    "show_again": "Show onboarding again",
+    "check_failed": "Onboarding check failed:"
+  },
+  "about": {
+    "feedback": "📧 Feedback:",
+    "bg_credit": "🖼️ Background image by"
+  }
+}

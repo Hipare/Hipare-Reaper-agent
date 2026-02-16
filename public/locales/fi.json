@@ -1,0 +1,177 @@
+{
+  "app": {
+    "title": "Hipare - Reaper AI Agent",
+    "version_loaded": "Hipare v1.0 MCP Edition loaded"
+  },
+  "sidebar": {
+    "hipare": "Hipare",
+    "conversations": "Keskustelut",
+    "vst_plugins": "VST-pluginit",
+    "studio_setup": "Studio Setup",
+    "settings": "Asetukset",
+    "new_chat": "+ Uusi keskustelu",
+    "select_conversation": "Valitse keskustelu"
+  },
+  "quick_commands": {
+    "title": "Pikakomennot",
+    "new_track": "Luo uusi raita",
+    "new_track_short": "+ Raita",
+    "show_tracks": "Nayta kaikki raidat",
+    "tracks_short": "Raidat",
+    "play": "Aloita toisto",
+    "play_short": "Play",
+    "stop": "Pysayta toisto",
+    "stop_short": "Stop",
+    "save": "Tallenna projekti",
+    "save_short": "Tallenna"
+  },
+  "input": {
+    "placeholder": "Kirjoita viesti...",
+    "analyze_placeholder": "🎧 Analysoi: kysy tai käske..."
+  },
+  "buttons": {
+    "save": "Tallenna",
+    "cancel": "Peruuta",
+    "close": "Sulje",
+    "skip": "Ohita",
+    "continue": "Jatka →",
+    "start": "Aloita",
+    "delete": "Poista",
+    "rename": "Nimea uudelleen",
+    "save_and_close": "Tallenna ja sulje",
+    "send": "Lähetä"
+  },
+  "genres": {
+    "title": "Vaihda genrejä",
+    "select_title": "Valitse genret",
+    "description": "Valitse genret. Mitä tarkemmin rajaat, sitä paremmin AI voi hyödyntää tietoa. Voit valita kaikki tai ei yhtään.",
+    "updated": "Genret päivitetty:",
+    "no_selections": "ei valintoja",
+    "update_failed": "Genrejen päivitys epäonnistui",
+    "start_without": "Aloita ilman valintaa"
+  },
+  "settings": {
+    "title": "Asetukset",
+    "tab_ai": "Tekoälyt",
+    "tab_connection": "Yhteysasetukset",
+    "tab_apikeys": "API-avaimet",
+    "tab_language": "Kieli",
+    "models_description": "Valitse 1-5 mallia, jotka näytetään valikossa. Mallit tarvitsevat API-avaimet (.env).",
+    "search_models": "🔍 Hae malleja...",
+    "filter_all": "Kaikki",
+    "filter_free": "✅ Ilmaiset",
+    "filter_toolcall": "🔧 Tool Calling",
+    "filter_favorites": "⭐ Suosikit",
+    "filter_selected": "🎯 Valitut",
+    "bridge_dir_hint": "Kansio, jossa MCP ja Lua-bridge kommunikoivat JSON-tiedostoilla.",
+    "profile_auto": "Automaattinen - valitaan tekoälyn mukaan",
+    "profile_dsl": "DSL Production - suositellaan useimmille tekoälyille",
+    "profile_minimal": "DSL Minimal - vain yksinkertaiset komennot",
+    "profile_groq": "Groq Essential - kevyt, Groq-mallien raja 128 työkalua",
+    "profile_hint": "Automaattinen valitsee profiilin aktiivisen tekoälyn perusteella. DSL Production sopii useimmille.",
+    "reaper_bridge_title": "Reaper Bridge",
+    "open_reaper": "Avaa REAPER",
+    "load_bridge": "\"Load...\" → valitse mcp_bridge.lua",
+    "press_run": "Paina \"Run/Close\"",
+    "check_console": "Tarkista konsolista: \"REAPER MCP Bridge started\"",
+    "testing_mcp": "Testataan MCP-yhteyttä...",
+    "no_connection": "Ei yhteyttä:",
+    "api_keys_title": "API-avainten hallinta",
+    "api_keys_hint": "API-avaimet tallennetaan .env-tiedostoon. Muutokset vaativat palvelimen uudelleenkäynnistyksen.",
+    "save_api_keys": "Tallenna API-avaimet",
+    "api_keys_saved": "API-avaimet tallennettu! Käynnistä Hipare uudelleen, jotta muutokset tulevat voimaan.",
+    "api_keys_save_failed": "API-avainten tallennus epäonnistui:",
+    "api_keys_status_failed": "API-avainten tilan lataus epäonnistui:",
+    "api_key_set": "✅ Asetettu",
+    "api_key_missing": "❌ Puuttuu",
+    "provider_groq_hint": "Ilmainen. Rekisteröidy:",
+    "provider_google_hint": "Ilmainen taso. Rekisteröidy:",
+    "provider_openrouter_hint": "Ilmaisia ja maksullisia malleja. Rekisteröidy:",
+    "setup_step_1": "1. Rekisteröidy haluamasi palvelun sivulle",
+    "setup_step_2": "2. Luo API-avain palvelun asetuksista",
+    "setup_step_3": "3. Kopioi avain tähän ja tallenna",
+    "setup_step_4": "4. Käynnistä Hipare uudelleen (sulje ja avaa)",
+    "setup_step_5": "5. Uudet mallit näkyvät Tekoälyt-välilehdellä",
+    "select_model_error": "Valitse vähintään yksi malli tai syötä API-avain.",
+    "enter_api_key_error": "Syötä vähintään yksi API-avain.",
+    "models_load_failed": "Mallien lataus epäonnistui. Tarkista API-avaimet.",
+    "no_models_available": "Ei malleja saatavilla. Tarkista API-avaimet .env-tiedostosta.",
+    "error_in_settings": "Virhe asetuksissa:",
+    "language_title": "Kieli / Language",
+    "language_hint": "",
+    "language_fi": "Suomi",
+    "language_en": "English"
+  },
+  "models": {
+    "price_free": "✅ ILMAINEN",
+    "price_cheap": "💰 Halpa",
+    "price_mid": "💰💰 Keskihinta",
+    "price_expensive": "💰💰💰 Kallis",
+    "quality_excellent": "Erinomainen",
+    "quality_good": "Hyvä",
+    "quality_working": "Toimiva",
+    "quality_basic": "Perus",
+    "quality_unknown": "Tuntematon"
+  },
+  "vst": {
+    "title": "VST-Pluginit",
+    "search_placeholder": "Hae pluginia...",
+    "plugins_found": "pluginia loytyi",
+    "no_plugins": "Ei plugineja."
+  },
+  "studio": {
+    "title": "Studio Setup",
+    "description": "Kuvaile laitteistosi - mikit, soittimet, aanikortti jne.",
+    "placeholder": "Esim: Shure SM7B, Focusrite 2i2..."
+  },
+  "analyze": {
+    "toggle_title": "Analysoi audio (toggle)",
+    "mode_on": "Analysoi-tila PÄÄLLÄ",
+    "label": "Analysoi audio"
+  },
+  "context_menu": {
+    "rename": "Nimea uudelleen",
+    "delete": "Poista",
+    "clear": "Tyhjenna keskustelu",
+    "locked": "Lukittu"
+  },
+  "status": {
+    "connected": "Yhdistetty ✓",
+    "disconnected": "Ei yhteyttä ✗",
+    "connecting": "Yhdistetään...",
+    "menu": "Valikko"
+  },
+  "errors": {
+    "unknown": "Tuntematon virhe",
+    "creation_failed": "Luonti epäonnistui:",
+    "clearing_failed": "Tyhjennys epäonnistui:",
+    "generic": "Virhe:"
+  },
+  "onboarding": {
+    "step1_title": "Tervetuloa Hipareeseen! 🎵",
+    "step1_description": "Hipare tarvitsee vähintään yhden API-avaimen toimiakseen. Voit lisätä lisää myöhemmin asetuksista.",
+    "api_key_label": "API-avain",
+    "api_key_placeholder": "Liitä API-avain tähän...",
+    "provider_label": "Palvelu",
+    "add_key": "+ Lisää avain",
+    "key_empty_error": "Syötä API-avain ensin",
+    "key_added": "lisätty",
+    "step2_title": "Kerro studiolaitteistostasi 🎧",
+    "step2_description": "Tekoäly ottaa laitteesi ja soittimesi huomioon keskustelussa. Voit päivittää tiedot myöhemmin asetuksista.",
+    "step2_placeholder": "Esim: Focusrite Scarlett 2i2, Shure SM7B, Audio-Technica ATH-M50x, Yamaha HS8, Arturia MiniLab...",
+    "step3_title": "Valitse oletusmalli 🤖",
+    "step3_has_keys": "Valitse 1–5 tekoälyä. Voit vaihtaa valintaa myöhemmin asetuksista.",
+    "step3_no_keys": "API-avaimia ei syötetty — voit lisätä ne myöhemmin asetuksista.",
+    "step4_text_1": "Hipare syntyi intohimosta musiikkiin ja halusta tehdä tuottaminen helpommaksi kaikille.",
+    "step4_text_2": "Nimi tulee rakkaan koiramme lempinimestä. Ikonin sydänmuoto on meidän Hipun kirsussa olevan sydänkuvion muoto. 🐕",
+    "step4_text_3": "Hipareen tarkoitus ei ole luoda valmista taidetta eikä viedä artistien tai studioasiantuntijoiden roolia. Sen tarkoitus on auttaa luomaan sellaista mikä muuten olisi jäänyt luomatta — ja helpottaa ihmisiä keskittymään intohimoonsa.",
+    "coffee_text": "☕ Lahjoituksilla mahdollistetaan Hipareen jatkokehitys",
+    "start_using": "Aloita käyttö 🎵",
+    "show_again": "Näytä onboarding uudelleen",
+    "check_failed": "Onboarding-tarkistus epäonnistui:"
+  },
+  "about": {
+    "feedback": "📧 Palaute:",
+    "bg_credit": "🖼️ Background image by"
+  }
+}

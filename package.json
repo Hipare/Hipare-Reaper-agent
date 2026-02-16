@@ -1,0 +1,24 @@
+{
+  "name": "hipare-reaper-ai",
+  "version": "2.0.0",
+  "description": "HIPARE - Reaper AI Agent for music production",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "axios": "^1.13.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.1",
+    "node-fetch": "^2.7.0",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "@tauri-apps/api": "^2.10.1",
+    "@tauri-apps/cli": "^2.10.0",
+    "nodemon": "^3.1.11",
+    "sharp": "^0.34.5"
+  }
+}

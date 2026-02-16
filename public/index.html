@@ -1,0 +1,2894 @@
+<!DOCTYPE html>
+<html lang="fi" id="htmlRoot">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hipare - Reaper AI Agent</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik+Mono+One&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --neon-primary: #a27548;
+            --neon-bright: #d4a574;
+            --neon-glow: rgba(162, 117, 72, 0.8);
+            --neon-soft: rgba(162, 117, 72, 0.3);
+            --bg-deep: #0a0a0f;
+            --bg-surface: rgba(12, 10, 18, 0.95);
+            --bg-message: rgba(22, 18, 32, 0.85);
+            --bg-input: rgba(28, 24, 38, 0.9);
+            --text-primary: #f0eef5;
+            --text-secondary: #a8a0b8;
+            --text-muted: #706880;
+            --border-subtle: rgba(162, 117, 72, 0.15);
+            --border-active: rgba(162, 117, 72, 0.4);
+            --success: #4ade80;
+            --error: #f87171;
+        }
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            font-size: 15px;
+            line-height: 1.6;
+        }
+        .space-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0;
+            background: 
+                linear-gradient(to right, #000 0%, #000 10%, rgba(0,0,0,0.8) 20%, rgba(0,0,0,0.4) 30%, transparent 45%),
+                linear-gradient(to left, #000 0%, #000 10%, rgba(0,0,0,0.8) 20%, rgba(0,0,0,0.4) 30%, transparent 45%),
+                url('nebula-bg.jpg');
+            background-size: cover, cover, 60%;
+            background-position: center, center, center;
+            background-repeat: no-repeat;
+            background-color: #000;
+            filter: brightness(0.55);
+        }
+        .app-container {
+            position: relative;
+            z-index: 10;
+            width: 100%; height: 100%;
+            max-width: 950px; max-height: 750px;
+            margin: auto;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid var(--border-subtle);
+            background: transparent;
+            box-shadow: 0 0 80px rgba(162, 117, 72, 0.08);
+        }
+        /* SIDEBAR */
+        .sidebar {
+            position: fixed;
+            left: 0; top: 0;
+            width: 280px; height: 100%;
+            background: rgba(10, 8, 15, 0.98);
+            border-right: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            z-index: 200;
+            transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(20px);
+        }
+        .sidebar.open { transform: translateX(0); }
+        .sidebar-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 199;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        .sidebar-overlay.visible { opacity: 1; visibility: visible; }
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(180deg, rgba(162, 117, 72, 0.08) 0%, transparent 100%);
+        }
+        .sidebar-header h2 {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--neon-primary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .close-sidebar-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.4rem;
+            cursor: pointer;
+            line-height: 1;
+            padding: 5px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        .close-sidebar-btn:hover { color: var(--neon-primary); background: rgba(162,117,72,0.1); }
+        .conversations-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+        .conversation-item {
+            padding: 14px 16px;
+            margin-bottom: 8px;
+            background: rgba(30, 25, 40, 0.4);
+            border: 1px solid transparent;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .conversation-item:hover {
+            background: rgba(162, 117, 72, 0.12);
+            border-color: var(--border-subtle);
+        }
+        .conversation-item.active {
+            background: rgba(162, 117, 72, 0.2);
+            border-color: var(--neon-primary);
+            color: var(--text-primary);
+        }
+        .conversation-item.pinned { border-left: 3px solid var(--neon-primary); }
+        .sidebar-buttons {
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border-top: 1px solid var(--border-subtle);
+        }
+        .btn {
+            padding: 14px 18px;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--neon-primary) 0%, #8a5f38 100%);
+            color: white;
+            box-shadow: 0 4px 20px rgba(162, 117, 72, 0.3);
+        }
+        .btn-primary:hover {
+            box-shadow: 0 6px 30px rgba(162, 117, 72, 0.4);
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background: rgba(35, 30, 45, 0.8);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-subtle);
+        }
+        .btn-secondary:hover {
+            background: rgba(162, 117, 72, 0.15);
+            border-color: var(--neon-primary);
+            color: var(--text-primary);
+        }
+        /* HEADER */
+        .chat-header {
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: var(--bg-surface);
+            min-height: 75px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .chat-header.thinking {
+            background: linear-gradient(180deg, rgba(162, 117, 72, 0.15) 0%, var(--bg-surface) 100%);
+            box-shadow: 0 0 30px rgba(162, 117, 72, 0.2), inset 0 0 20px rgba(162, 117, 72, 0.05);
+        }
+        .chat-header.thinking::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--neon-primary), transparent);
+            animation: headerGlowLine 1.5s ease-in-out infinite;
+        }
+        @keyframes headerGlowLine {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+        .menu-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 8px 10px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            line-height: 1;
+        }
+        .menu-btn:hover {
+            background: rgba(162, 117, 72, 0.15);
+            color: var(--neon-primary);
+        }
+        .chat-title-area { flex: 0 0 auto; max-width: 160px; }
+        .chat-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        /* NEON SIGN */
+        .neon-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        .neon-sign {
+            font-family: 'Rubik Mono One', monospace;
+            font-size: 2.4rem;
+            font-weight: 400;
+            color: transparent;
+            letter-spacing: 6px;
+            position: relative;
+            display: flex;
+            user-select: none;
+            -webkit-text-stroke: 2px var(--neon-bright);
+        }
+        .neon-sign span {
+            position: relative;
+            filter: drop-shadow(0 0 3px var(--neon-bright))
+                    drop-shadow(0 0 8px var(--neon-primary))
+                    drop-shadow(0 0 20px var(--neon-glow))
+                    drop-shadow(0 0 40px var(--neon-soft));
+            animation: neonFlicker 4s ease-in-out infinite;
+        }
+        .neon-sign span:nth-child(1) { animation-delay: 0s; }
+        .neon-sign span:nth-child(2) { animation-delay: 0.1s; }
+        .neon-sign span:nth-child(3) { animation-delay: 0.2s; }
+        .neon-sign span:nth-child(4) { animation-delay: 0.3s; }
+        .neon-sign span:nth-child(5) { animation-delay: 0.4s; }
+        .neon-sign span:nth-child(6) { animation-delay: 0.5s; }
+        @keyframes neonFlicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.95; }
+        }
+        .neon-glow-bg {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 280px; height: 80px;
+            background: radial-gradient(ellipse at center, rgba(162, 117, 72, 0.2) 0%, transparent 70%);
+            filter: blur(20px);
+            pointer-events: none;
+            z-index: -1;
+        }
+        .neon-sign.thinking span.flicker-letter {
+            animation: letterFlicker 0.15s ease-in-out;
+        }
+        @keyframes letterFlicker {
+            0% { opacity: 1; }
+            20% { opacity: 0.1; }
+            40% { opacity: 0.8; }
+            60% { opacity: 0.2; }
+            80% { opacity: 1; }
+            100% { opacity: 1; }
+        }
+        .neon-sign.thinking { filter: brightness(1.3); }
+        .neon-sign.thinking + .neon-glow-bg {
+            animation: glowPulse 0.4s ease-in-out infinite;
+        }
+        @keyframes glowPulse {
+            0%, 100% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); }
+        }
+        /* Reaper Status */
+        .reaper-status {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            background: rgba(25, 20, 35, 0.7);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+        .reaper-status:hover { border-color: var(--neon-primary); }
+        .status-dot {
+            width: 9px; height: 9px;
+            border-radius: 50%;
+            background: var(--error);
+            box-shadow: 0 0 10px var(--error);
+        }
+        .reaper-status.connected .status-dot {
+            background: var(--success);
+            box-shadow: 0 0 10px var(--success);
+            animation: statusPulse 2s infinite;
+        }
+        @keyframes statusPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .reaper-status.connected {
+            border-color: rgba(74, 222, 128, 0.25);
+            color: var(--success);
+        }
+        /* MESSAGES AREA */
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            background: transparent;
+        }
+        .message {
+            max-width: 82%;
+            animation: messageSlide 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes messageSlide {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .message.user { align-self: flex-end; }
+        .message.ai { align-self: flex-start; }
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .message.user .message-header { justify-content: flex-end; }
+        .message-sender { font-weight: 600; color: var(--neon-primary); }
+        .message-bubble {
+            padding: 16px 20px;
+            border-radius: 16px;
+            line-height: 1.65;
+            font-size: 0.95rem;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            backdrop-filter: blur(12px);
+        }
+        .message.user .message-bubble {
+            background: linear-gradient(135deg, var(--neon-primary) 0%, #8a5f38 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 6px 20px rgba(162, 117, 72, 0.35);
+        }
+        .message.ai .message-bubble {
+            background: var(--bg-message);
+            border: 1px solid var(--border-subtle);
+            border-left: 3px solid var(--neon-primary);
+            border-bottom-left-radius: 4px;
+        }
+        /* Typing indicator */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            background: var(--bg-message);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            max-width: 82%;
+            backdrop-filter: blur(12px);
+        }
+        .typing-text { color: var(--text-secondary); font-size: 0.9rem; }
+        .typing-dots { display: flex; gap: 5px; }
+        .typing-dot {
+            width: 8px; height: 8px;
+            background: var(--neon-primary);
+            border-radius: 50%;
+            animation: typingBounce 1.4s infinite;
+            box-shadow: 0 0 8px var(--neon-soft);
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typingBounce {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-8px); opacity: 1; }
+        }
+        /* QUICK COMMANDS */
+        .quick-commands {
+            padding: 12px 20px;
+            background: rgba(15, 12, 22, 0.9);
+            border-top: 1px solid var(--border-subtle);
+            display: none;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+        .quick-commands.visible { display: flex; }
+        .quick-cmd-btn {
+            padding: 8px 16px;
+            background: rgba(162, 117, 72, 0.12);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            color: var(--text-secondary);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .quick-cmd-btn:hover {
+            background: rgba(162, 117, 72, 0.25);
+            border-color: var(--neon-primary);
+            color: var(--text-primary);
+        }
+        .toggle-analyze-btn {
+            padding: 8px 12px;
+            background: rgba(72, 117, 162, 0.15);
+            border: 1px solid rgba(72, 117, 162, 0.3);
+            border-radius: 6px;
+            color: #7eb8e8;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-right: 4px;
+        }
+        .toggle-analyze-btn:hover {
+            background: rgba(72, 117, 162, 0.25);
+            border-color: #7eb8e8;
+        }
+        .toggle-analyze-btn.active {
+            background: rgba(72, 117, 162, 0.4);
+            border-color: #7eb8e8;
+            box-shadow: 0 0 10px rgba(72, 117, 162, 0.5);
+        }
+        .analyze-indicator {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #7eb8e8;
+            color: #000;
+            font-size: 0.6rem;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .quick-commands-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-right: 8px;
+        }
+        /* INPUT AREA */
+        .input-area {
+            padding: 18px 20px;
+            border-top: 1px solid var(--border-subtle);
+            background: var(--bg-surface);
+            display: flex;
+            gap: 14px;
+            align-items: flex-end;
+        }
+        .toggle-quick-btn {
+            background: none;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 12px;
+            border-radius: 10px;
+            transition: all 0.2s;
+            line-height: 1;
+        }
+        .toggle-quick-btn:hover {
+            background: rgba(162, 117, 72, 0.15);
+            border-color: var(--neon-primary);
+            color: var(--neon-primary);
+        }
+        .toggle-quick-btn.active {
+            background: rgba(162, 117, 72, 0.2);
+            border-color: var(--neon-primary);
+            color: var(--neon-primary);
+        }
+        .input-wrapper { flex: 1; }
+        .message-input {
+            width: 100%;
+            padding: 16px 18px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            resize: none;
+            outline: none;
+            transition: all 0.2s;
+            min-height: 52px;
+            max-height: 140px;
+            line-height: 1.5;
+        }
+        .message-input:focus {
+            border-color: var(--neon-primary);
+            box-shadow: 0 0 20px rgba(162, 117, 72, 0.12);
+        }
+        .message-input::placeholder { color: var(--text-muted); }
+        .model-select {
+            padding: 16px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            cursor: pointer;
+            outline: none;
+            min-width: 140px;
+            transition: all 0.2s;
+        }
+        .model-select:hover { border-color: var(--border-active); }
+        .send-btn {
+            padding: 16px 26px;
+            background: linear-gradient(135deg, var(--neon-primary) 0%, #8a5f38 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 20px rgba(162, 117, 72, 0.3);
+            transition: all 0.2s;
+        }
+        .send-btn:hover:not(:disabled) {
+            box-shadow: 0 6px 30px rgba(162, 117, 72, 0.45);
+            transform: translateY(-2px);
+        }
+        .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        /* MODALS */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 300;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+        .modal {
+            background: rgba(18, 14, 25, 0.98);
+            border: 1px solid var(--border-active);
+            border-radius: 16px;
+            padding: 28px;
+            max-width: 620px;
+            width: 92%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 0 80px rgba(162, 117, 72, 0.15);
+            box-sizing: border-box;
+        }
+        .modal h2 {
+            font-size: 1rem;
+            color: var(--neon-primary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 18px;
+        }
+        .modal-text {
+            color: var(--text-secondary);
+            margin-bottom: 18px;
+            line-height: 1.6;
+            font-size: 0.9rem;
+        }
+        .modal-input, .studio-input, .search-input {
+            width: 100%;
+            padding: 16px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            outline: none;
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+        .studio-input { min-height: 150px; resize: vertical; }
+        .modal-input:focus, .studio-input:focus, .search-input:focus { border-color: var(--neon-primary); }
+        .modal-label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .vst-list {
+            list-style: none;
+            max-height: 320px;
+            overflow-y: auto;
+        }
+        .vst-item {
+            padding: 12px 16px;
+            background: rgba(30, 25, 40, 0.5);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+        .vst-item:hover {
+            background: rgba(162, 117, 72, 0.1);
+            border-color: var(--neon-primary);
+        }
+        .close-modal-btn, .save-modal-btn {
+            width: 100%;
+            padding: 16px;
+            margin-top: 10px;
+            background: linear-gradient(135deg, var(--neon-primary) 0%, #8a5f38 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-sizing: border-box;
+        }
+        .genre-btn {
+            padding: 12px 16px;
+            background: rgba(30, 25, 40, 0.6);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .genre-btn:hover:not([disabled]) {
+            background: rgba(162, 117, 72, 0.2);
+            border-color: var(--neon-primary);
+        }
+        .genre-btn.active {
+            background: rgba(162, 117, 72, 0.3);
+            border-color: var(--neon-primary);
+            box-shadow: 0 0 10px rgba(162, 117, 72, 0.3);
+        }
+        .genre-btn[disabled] {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .test-btn {
+            padding: 12px 20px;
+            background: rgba(74, 222, 128, 0.2);
+            border: 1px solid var(--success);
+            border-radius: 8px;
+            color: var(--success);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            cursor: pointer;
+            margin-bottom: 12px;
+        }
+        .test-btn:hover { background: rgba(74, 222, 128, 0.3); }
+        .test-result {
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+        }
+        .test-result.success { background: rgba(74, 222, 128, 0.15); color: var(--success); }
+        .test-result.error { background: rgba(248, 113, 113, 0.15); color: var(--error); }
+        /* Context menu */
+        .context-menu {
+            position: fixed;
+            background: rgba(18, 14, 25, 0.98);
+            border: 1px solid var(--border-active);
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+            z-index: 400;
+            min-width: 180px;
+            overflow: hidden;
+        }
+        .context-menu-item {
+            padding: 14px 18px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.15s;
+            font-size: 0.9rem;
+        }
+        .context-menu-item:hover {
+            background: rgba(162, 117, 72, 0.15);
+            color: var(--text-primary);
+        }
+        .context-menu-item.danger:hover {
+            background: rgba(248, 113, 113, 0.15);
+            color: var(--error);
+        }
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 7px; }
+        ::-webkit-scrollbar-track { background: rgba(25, 20, 35, 0.3); }
+        ::-webkit-scrollbar-thumb { background: rgba(162, 117, 72, 0.4); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(162, 117, 72, 0.6); }
+        /* Model Checkboxes */
+        .settings-section {
+            margin-bottom: 15px;
+        }
+        .models-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 280px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        .model-checkbox-item {
+            padding: 12px 14px;
+            background: rgba(30, 25, 40, 0.5);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .model-checkbox-item:hover {
+            background: rgba(162, 117, 72, 0.1);
+            border-color: var(--neon-primary);
+        }
+        .model-checkbox-item input[type="checkbox"] {
+            cursor: pointer;
+        }
+        .model-checkbox-item input[type="checkbox"]:disabled {
+            cursor: not-allowed;
+        }
+
+        /* Settings Tabs */
+        .settings-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        .settings-tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.9rem;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .settings-tab:hover {
+            color: var(--text-primary);
+        }
+        .settings-tab.active {
+            color: var(--neon-primary);
+            border-bottom-color: var(--neon-primary);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 650px) {
+            .chat-title-area { display: none; }
+            .neon-sign { font-size: 1.5rem; letter-spacing: 2px; }
+            .reaper-status span { display: none; }
+            .model-select { min-width: 110px; }
+        }
+        /* ONBOARDING */
+        .onboarding-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.92);
+            z-index: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+        .onboarding-card {
+            background: rgba(18, 14, 25, 0.98);
+            border: 1px solid var(--border-active);
+            border-radius: 20px;
+            padding: 36px;
+            max-width: 560px;
+            width: 92%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 0 100px rgba(162, 117, 72, 0.2);
+            animation: onboardingFadeIn 0.4s ease-out;
+        }
+        @keyframes onboardingFadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .onboarding-title {
+            font-size: 1.3rem;
+            color: var(--neon-bright);
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
+        .onboarding-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.7;
+            margin-bottom: 24px;
+        }
+        .onboarding-field {
+            margin-bottom: 16px;
+        }
+        .onboarding-field label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+        .onboarding-field .field-hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        .onboarding-field .field-hint a {
+            color: var(--neon-primary);
+            text-decoration: none;
+        }
+        .onboarding-field .field-hint a:hover {
+            text-decoration: underline;
+        }
+        .onboarding-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        .onboarding-buttons .btn-skip {
+            flex: 1;
+            padding: 14px;
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            color: var(--text-muted);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .onboarding-buttons .btn-skip:hover {
+            border-color: var(--border-active);
+            color: var(--text-secondary);
+        }
+        .onboarding-buttons .btn-next {
+            flex: 2;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--neon-primary) 0%, #8a5f38 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+        }
+        .onboarding-buttons .btn-next:hover {
+            box-shadow: 0 4px 20px rgba(162, 117, 72, 0.4);
+            transform: translateY(-1px);
+        }
+        .onboarding-steps {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+        .onboarding-step-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--border-subtle);
+            transition: all 0.3s;
+        }
+        .onboarding-step-dot.active {
+            background: var(--neon-primary);
+            box-shadow: 0 0 8px rgba(162, 117, 72, 0.5);
+        }
+        .onboarding-step-dot.done {
+            background: var(--success);
+        }
+        .onboarding-model-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .onboarding-model-item {
+            padding: 14px;
+            background: rgba(30, 25, 40, 0.5);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .onboarding-model-item:hover {
+            border-color: var(--border-active);
+            background: rgba(162, 117, 72, 0.1);
+        }
+        .onboarding-model-item.selected {
+            border-color: var(--neon-primary);
+            background: rgba(162, 117, 72, 0.2);
+        }
+        .onboarding-model-item.disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+        .onboarding-model-item .model-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+        .onboarding-model-item .model-provider {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        .onboarding-about-text {
+            color: var(--text-secondary);
+            font-size: 0.92rem;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+        .onboarding-coffee {
+            display: block;
+            text-align: center;
+            padding: 14px;
+            background: rgba(162, 117, 72, 0.1);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            color: var(--neon-bright);
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            transition: all 0.2s;
+        }
+        .onboarding-coffee:hover {
+            background: rgba(162, 117, 72, 0.2);
+            border-color: var(--border-active);
+        }
+    </style>
+</head>
+<body>
+    <div class="space-bg" id="spaceBg"></div>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>Keskustelut</h2>
+            <button class="close-sidebar-btn" id="closeSidebarBtn">&#10005;</button>
+        </div>
+        <div class="conversations-list" id="conversationsList"></div>
+        <div class="sidebar-buttons">
+            <button class="btn btn-secondary" id="hipareAboutBtn">Hipare</button>
+            <button class="btn btn-secondary" id="vstBtn">VST-pluginit</button>
+            <button class="btn btn-secondary" id="studioBtn">Studio Setup</button>
+            <button class="btn btn-secondary" id="settingsBtn">Asetukset</button>
+            <button class="btn btn-primary" id="newChatBtn">+ Uusi keskustelu</button>
+        </div>
+    </div>
+    <div class="app-container">
+        <div class="chat-header" id="chatHeader">
+            <button class="menu-btn" id="menuBtn" title="Valikko">&#9776;</button>
+            <div class="chat-title-area">
+                <div class="chat-title" id="chatTitle">Valitse keskustelu</div>
+            </div>
+            <div class="neon-container">
+                <div class="neon-sign" id="neonSign">
+                    <span>H</span><span>I</span><span>P</span><span>A</span><span>R</span><span>E</span>
+                </div>
+                <div class="neon-glow-bg"></div>
+            </div>
+            <div class="reaper-status" id="reaperStatus" title="Klikkaa asetuksiin">
+                <div class="status-dot"></div>
+                <span id="reaperStatusText">Yhdistetaan...</span>
+            </div>
+        </div>
+        <div class="messages-area" id="messagesArea"></div>
+        <div class="quick-commands" id="quickCommands">
+            <span class="quick-commands-label">Pika:</span>
+            <div id="quickCommandsContainer"></div>
+        </div>
+        <div class="input-area">
+            <button class="toggle-quick-btn" id="toggleQuickBtn" title="Pikakomennot">&#9889;</button>
+            <button class="toggle-quick-btn" id="genreBtn" title="Vaihda genrejä">&#9776;</button>
+            <button class="toggle-analyze-btn" id="analyzeToggle" title="Analysoi audio (toggle)">🎧</button>
+            <div class="input-wrapper">
+                <textarea class="message-input" id="messageInput" placeholder="Kirjoita viesti..." rows="1" disabled></textarea>
+            </div>
+            <select class="model-select" id="modelSelect">
+                <option value="llama">Llama 3.3</option>
+                <option value="gemini">Gemini</option>
+                <option value="haiku">Haiku</option>
+                <option value="sonnet">Sonnet</option>
+                <option value="opus">Opus 4</option>
+            </select>
+            <button class="send-btn" id="sendBtn" disabled>Lähetä</button>
+        </div>
+    </div>
+    <script>
+        // State
+        let currentConversationId = null;
+        let currentConversationPinned = false;
+        let conversations = [];
+        let isSending = false;
+        let isAIThinking = false;
+        let vstPlugins = [];
+        let flickerInterval = null;
+        let quickCommandsVisible = false;
+        let analyzeModeActive = false;
+
+        // i18n - Internationalization
+        let currentLocale = 'fi';
+        let localeData = {};
+
+        async function loadLocale(lang) {
+            try {
+                const resp = await fetch(`/locales/${lang}.json`);
+                localeData = await resp.json();
+                currentLocale = lang;
+                document.getElementById('htmlRoot').lang = lang;
+            } catch (e) {
+                console.error('Locale load failed:', e);
+            }
+        }
+
+        function t(key) {
+            const keys = key.split('.');
+            let val = localeData;
+            for (const k of keys) {
+                if (val && typeof val === 'object' && k in val) {
+                    val = val[k];
+                } else {
+                    return key; // fallback: return key itself
+                }
+            }
+            return val;
+        }
+
+        async function setLanguage(lang) {
+            await loadLocale(lang);
+            await fetch('/api/language', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ language: lang })
+            });
+            applyLocaleToUI();
+        }
+
+        function applyLocaleToUI() {
+            // Static elements
+            document.querySelector('.sidebar-header h2').textContent = t('sidebar.conversations');
+            document.getElementById('hipareAboutBtn').textContent = t('sidebar.hipare');
+            vstBtn.textContent = t('sidebar.vst_plugins') + (vstPlugins.length ? ' (' + vstPlugins.length + ')' : '');
+            document.getElementById('studioBtn').textContent = t('sidebar.studio_setup');
+            document.getElementById('settingsBtn').textContent = t('sidebar.settings');
+            newChatBtn.textContent = t('sidebar.new_chat');
+            document.getElementById('menuBtn').title = t('status.menu');
+            if (!analyzeModeActive) {
+                messageInput.placeholder = t('input.placeholder');
+            } else {
+                messageInput.placeholder = t('input.analyze_placeholder');
+            }
+            if (!currentConversationId) {
+                chatTitle.textContent = t('sidebar.select_conversation');
+            }
+            // Reaper status
+            if (!reaperStatus.classList.contains('connected')) {
+                reaperStatusText.textContent = t('status.disconnected');
+            }
+            // Send button
+            sendBtn.textContent = t('buttons.send');
+            // Analyze toggle
+            analyzeToggle.title = analyzeModeActive ? t('analyze.mode_on') : t('analyze.label');
+            document.getElementById('toggleQuickBtn').title = t('quick_commands.title');
+            document.getElementById('genreBtn').title = t('genres.title');
+            // Quick commands label
+            const qcLabel = document.querySelector('.quick-commands-label');
+            if (qcLabel) qcLabel.textContent = t('quick_commands.title').substring(0, 5) + ':';
+            renderQuickCommands();
+        }
+
+        // Pikakomentojärjestelmä - seuraa käyttöä ja päivittyy automaattisesti
+        function getDefaultQuickCommands() {
+            return [
+                { cmd: t('quick_commands.new_track'), label: t('quick_commands.new_track_short') },
+                { cmd: t('quick_commands.show_tracks'), label: t('quick_commands.tracks_short') },
+                { cmd: t('quick_commands.play'), label: t('quick_commands.play_short') },
+                { cmd: t('quick_commands.stop'), label: t('quick_commands.stop_short') },
+                { cmd: t('quick_commands.save'), label: t('quick_commands.save_short') }
+            ];
+        }
+        const DEFAULT_QUICK_COMMANDS = [
+            { cmd: 'Luo uusi raita', label: '+ Raita' },
+            { cmd: 'Nayta kaikki raidat', label: 'Raidat' },
+            { cmd: 'Aloita toisto', label: 'Play' },
+            { cmd: 'Pysayta toisto', label: 'Stop' },
+            { cmd: 'Tallenna projekti', label: 'Tallenna' }
+        ];
+
+        function getCommandUsage() {
+            return JSON.parse(localStorage.getItem('commandUsage') || '{}');
+        }
+
+        function trackCommandUsage(command) {
+            const usage = getCommandUsage();
+            // Normalisoi komento (poista [ANALYZE_MODE] prefix)
+            const cleanCmd = command.replace('[ANALYZE_MODE] ', '').trim();
+            if (cleanCmd.length < 3 || cleanCmd.length > 50) return; // Älä tallenna liian lyhyitä/pitkiä
+            usage[cleanCmd] = (usage[cleanCmd] || 0) + 1;
+            localStorage.setItem('commandUsage', JSON.stringify(usage));
+        }
+
+        function getTopCommands(count = 5) {
+            const usage = getCommandUsage();
+            const entries = Object.entries(usage);
+
+            // Jos ei tarpeeksi historiaa, käytä oletuksia
+            if (entries.length < 3) {
+                return getDefaultQuickCommands();
+            }
+
+            // Järjestä käytön mukaan ja ota top N
+            const sorted = entries.sort((a, b) => b[1] - a[1]).slice(0, count);
+            return sorted.map(([cmd, _]) => ({
+                cmd: cmd,
+                label: cmd.length > 12 ? cmd.substring(0, 10) + '...' : cmd
+            }));
+        }
+
+        function renderQuickCommands() {
+            const container = document.getElementById('quickCommandsContainer');
+            if (!container) return;
+
+            const commands = getTopCommands(5);
+            container.innerHTML = commands.map(c =>
+                `<button class="quick-cmd-btn" data-cmd="${c.cmd}">${c.label}</button>`
+            ).join('');
+
+            // Lisää event listenerit uusille napeille
+            container.querySelectorAll('.quick-cmd-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const cmd = btn.dataset.cmd;
+                    if (cmd && currentConversationId) {
+                        messageInput.value = cmd;
+                        sendMessage();
+                    }
+                });
+            });
+        }
+
+        // DOM Elements
+        const chatHeader = document.getElementById('chatHeader');
+        const neonSign = document.getElementById('neonSign');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const menuBtn = document.getElementById('menuBtn');
+        const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+        const conversationsList = document.getElementById('conversationsList');
+        const messagesArea = document.getElementById('messagesArea');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const modelSelect = document.getElementById('modelSelect');
+        const newChatBtn = document.getElementById('newChatBtn');
+        const vstBtn = document.getElementById('vstBtn');
+        const studioBtn = document.getElementById('studioBtn');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const chatTitle = document.getElementById('chatTitle');
+        const reaperStatus = document.getElementById('reaperStatus');
+        const reaperStatusText = document.getElementById('reaperStatusText');
+        const quickCommands = document.getElementById('quickCommands');
+        const toggleQuickBtn = document.getElementById('toggleQuickBtn');
+        const analyzeToggle = document.getElementById('analyzeToggle');
+
+        const modelNames = { gemini: 'Gemini', llama: 'Llama 3.3', sonnet: 'Sonnet', opus: 'Opus 4', haiku: 'Haiku' };
+
+        // Sidebar
+        function openSidebar() { sidebar.classList.add('open'); sidebarOverlay.classList.add('visible'); }
+        function closeSidebar() { sidebar.classList.remove('open'); sidebarOverlay.classList.remove('visible'); }
+        menuBtn.addEventListener('click', openSidebar);
+        closeSidebarBtn.addEventListener('click', closeSidebar);
+        sidebarOverlay.addEventListener('click', closeSidebar);
+
+        // Quick Commands
+        toggleQuickBtn.addEventListener('click', () => {
+            quickCommandsVisible = !quickCommandsVisible;
+            quickCommands.classList.toggle('visible', quickCommandsVisible);
+            toggleQuickBtn.classList.toggle('active', quickCommandsVisible);
+        });
+        // Alusta pikakomennot (dynaamiset, perustuu käyttöön)
+        renderQuickCommands();
+
+        // Analyze Toggle Button
+        analyzeToggle.addEventListener('click', () => {
+            analyzeModeActive = !analyzeModeActive;
+            analyzeToggle.classList.toggle('active', analyzeModeActive);
+            if (analyzeModeActive) {
+                analyzeToggle.title = t('analyze.mode_on');
+                messageInput.placeholder = t('input.analyze_placeholder');
+            } else {
+                analyzeToggle.title = t('analyze.label');
+                messageInput.placeholder = t('input.placeholder');
+            }
+        });
+
+        // Genre Button
+        const genreBtn = document.getElementById('genreBtn');
+        genreBtn.addEventListener('click', async () => {
+            if (!currentConversationId) {
+                showMessage(t('sidebar.select_conversation'));
+                return;
+            }
+
+            // Hae nykyiset genret
+            const response = await fetch('/api/conversations');
+            const conversations = await response.json();
+            const currentConv = conversations.find(c => c.id === currentConversationId);
+            const currentGenres = currentConv?.genres ? JSON.parse(currentConv.genres) : [];
+
+            // Näytä genre-vaihto-modaali
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.innerHTML = `
+                <div class="modal" style="max-width: 500px;">
+                    <h2>${t('genres.title')}</h2>
+                    <p class="modal-text" style="font-size: 0.85rem; margin-bottom: 20px;">
+                        ${t('genres.description')}
+                    </p>
+
+                    <div class="genre-selection" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <button class="genre-btn ${currentGenres.includes('metal') ? 'active' : ''}" data-genre="metal">🎸 Metal</button>
+                        <button class="genre-btn ${currentGenres.includes('rock') ? 'active' : ''}" data-genre="rock">🎵 Rock</button>
+                        <button class="genre-btn ${currentGenres.includes('electronic') ? 'active' : ''}" data-genre="electronic">🎧 Electronic</button>
+                        <button class="genre-btn ${currentGenres.includes('pop') ? 'active' : ''}" data-genre="pop">🎤 Pop</button>
+                        <button class="genre-btn ${currentGenres.includes('jazz') ? 'active' : ''}" data-genre="jazz">🎺 Jazz</button>
+                        <button class="genre-btn ${currentGenres.includes('hiphop') ? 'active' : ''}" data-genre="hiphop">🎤 Hiphop/Rap</button>
+                        <button class="genre-btn ${currentGenres.includes('orchestral') ? 'active' : ''}" data-genre="orchestral">🎻 Orchestral</button>
+                        <button class="genre-btn ${currentGenres.includes('blues') ? 'active' : ''}" data-genre="blues">🎸 Blues</button>
+                    </div>
+
+                    <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button class="close-modal-btn">${t('buttons.cancel')}</button>
+                        <button class="save-modal-btn" id="saveGenres">${t('buttons.save')}</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+
+            const selectedGenres = [...currentGenres];
+
+            // Genre-napit (ei rajoitusta)
+            overlay.querySelectorAll('.genre-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const genre = btn.dataset.genre;
+                    if (btn.classList.contains('active')) {
+                        btn.classList.remove('active');
+                        const index = selectedGenres.indexOf(genre);
+                        if (index > -1) selectedGenres.splice(index, 1);
+                    } else {
+                        btn.classList.add('active');
+                        selectedGenres.push(genre);
+                    }
+                });
+            });
+
+            // Tallenna genret
+            const saveGenresBtn = document.getElementById('saveGenres');
+            if (saveGenresBtn) {
+                saveGenresBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('💾 Genre Tallenna -nappia painettu');
+
+                    try {
+                        await fetch(`/api/conversations/${currentConversationId}/genres`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ genres: selectedGenres })
+                        });
+                        showMessage(`${t('genres.updated')} ${selectedGenres.length > 0 ? selectedGenres.join(', ') : t('genres.no_selections')}`);
+                        overlay.remove();
+                    } catch (error) {
+                        console.error('Genre update failed:', error);
+                        showMessage(t('genres.update_failed'));
+                    }
+                });
+            } else {
+                console.error('❌ saveGenres-nappi ei löytynyt!');
+            }
+
+            // Peruuta
+            overlay.querySelector('.close-modal-btn').addEventListener('click', () => {
+                overlay.remove();
+            });
+
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) overlay.remove();
+            });
+        });
+
+        // Neon Flicker
+        function startNeonFlicker() {
+            if (flickerInterval) return;
+            neonSign.classList.add('thinking');
+            chatHeader.classList.add('thinking');
+            flickerInterval = setInterval(() => {
+                if (!isAIThinking) { stopNeonFlicker(); return; }
+                const letters = neonSign.querySelectorAll('span');
+                const idx = Math.floor(Math.random() * letters.length);
+                letters[idx].classList.add('flicker-letter');
+                setTimeout(() => letters[idx].classList.remove('flicker-letter'), 150);
+            }, 100 + Math.random() * 200);
+        }
+        function stopNeonFlicker() {
+            if (flickerInterval) { clearInterval(flickerInterval); flickerInterval = null; }
+            neonSign.classList.remove('thinking');
+            chatHeader.classList.remove('thinking');
+            neonSign.querySelectorAll('span').forEach(s => s.classList.remove('flicker-letter'));
+        }
+
+        // Reaper Status
+        async function loadReaperInfo() {
+            try {
+                const response = await fetch('/api/reaper-info');
+                const data = await response.json();
+                if (data.connected) {
+                    reaperStatus.classList.add('connected');
+                    let name = data.project_name || t('status.connected');
+                    if (name.endsWith('.rpp')) name = name.slice(0, -4);
+                    reaperStatusText.textContent = name;
+                } else {
+                    reaperStatus.classList.remove('connected');
+                    reaperStatusText.textContent = t('status.disconnected');
+                }
+            } catch (error) {
+                reaperStatus.classList.remove('connected');
+                reaperStatusText.textContent = t('status.disconnected');
+            }
+        }
+
+        // Settings Modal
+        async function showSettingsModal() {
+            try {
+                // Hae asetukset nopeasti
+                const response = await fetch('/api/settings');
+                const settings = await response.json();
+
+                // Avaa modal heti
+                const overlay = document.createElement('div');
+                overlay.className = 'modal-overlay';
+                overlay.innerHTML = `
+                    <div class="modal" style="max-width: 620px;">
+                        <h2>${t('settings.title')}</h2>
+
+                        <!-- VÄLILEHDET -->
+                        <div class="settings-tabs">
+                            <button class="settings-tab active" data-tab="ai">${t('settings.tab_ai')}</button>
+                            <button class="settings-tab" data-tab="connection">${t('settings.tab_connection')}</button>
+                            <button class="settings-tab" data-tab="apikeys">${t('settings.tab_apikeys')}</button>
+                            <button class="settings-tab" data-tab="language">${t('settings.tab_language')}</button>
+                        </div>
+
+                        <!-- TEKOÄLYMALLIT TAB -->
+                        <div class="tab-content active" id="tab-ai">
+                            <p class="modal-text" style="font-size: 0.85rem; margin-bottom: 15px;">
+                                ${t('settings.models_description')}
+                            </p>
+
+                            <!-- HAKU JA FILTTERIT -->
+                            <div style="margin-bottom: 15px;">
+                                <input type="text" id="modelSearch" placeholder="${t('settings.search_models')}"
+                                       style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid var(--border-subtle);
+                                              background: rgba(30, 25, 40, 0.5); color: var(--text-primary); border-radius: 8px;">
+
+                                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                    <button class="filter-btn active" data-filter="all" style="padding: 6px 12px; border: 1px solid var(--border-subtle);
+                                            background: rgba(162, 117, 72, 0.2); color: var(--text-primary); border-radius: 6px; cursor: pointer;">
+                                        ${t('settings.filter_all')}
+                                    </button>
+                                    <button class="filter-btn" data-filter="free" data-filter-type="feature" style="padding: 6px 12px; border: 1px solid var(--border-subtle);
+                                            background: transparent; color: var(--text-primary); border-radius: 6px; cursor: pointer;">
+                                        ${t('settings.filter_free')}
+                                    </button>
+                                    <button class="filter-btn" data-filter="toolcall" data-filter-type="feature" style="padding: 6px 12px; border: 1px solid var(--border-subtle);
+                                            background: transparent; color: var(--text-primary); border-radius: 6px; cursor: pointer;">
+                                        ${t('settings.filter_toolcall')}
+                                    </button>
+                                    <button class="filter-btn" data-filter="favorites" data-filter-type="feature" style="padding: 6px 12px; border: 1px solid var(--border-subtle);
+                                            background: transparent; color: var(--text-primary); border-radius: 6px; cursor: pointer;">
+                                        ${t('settings.filter_favorites')}
+                                    </button>
+                                    <button class="filter-btn" data-filter="groq" data-filter-type="provider" style="padding: 6px 12px; border: 1px solid var(--border-subtle);
+                                            background: transparent; color: var(--text-primary); border-radius: 6px; cursor: pointer;">
+                                        Groq
+                                    </button>
+                                    <button class="filter-btn" data-filter="openrouter" data-filter-type="provider" style="padding: 6px 12px; border: 1px solid var(--border-subtle);
+                                            background: transparent; color: var(--text-primary); border-radius: 6px; cursor: pointer;">
+                                        OpenRouter
+                                    </button>
+                                    <button class="filter-btn" data-filter="google" data-filter-type="provider" style="padding: 6px 12px; border: 1px solid var(--border-subtle);
+                                            background: transparent; color: var(--text-primary); border-radius: 6px; cursor: pointer;">
+                                        Google
+                                    </button>
+                                    <button class="filter-btn" data-filter="selected" data-filter-type="feature" style="padding: 6px 12px; border: 1px solid var(--border-subtle);
+                                            background: transparent; color: var(--text-primary); border-radius: 6px; cursor: pointer;">
+                                        ${t('settings.filter_selected')}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Inline-viesti -->
+                            <div id="modelMessage" style="display: none; padding: 10px; margin-bottom: 10px; border-radius: 8px;
+                                                           background: rgba(162, 117, 72, 0.2); border: 1px solid var(--neon-primary);
+                                                           color: var(--text-primary); font-size: 0.85rem;"></div>
+
+                            <div class="models-grid" id="modelsGrid">
+                                <p style="color: var(--text-muted); text-align: center; padding: 40px;">...</p>
+                            </div>
+                        </div>
+
+                        <!-- YHTEYSASETUKSET TAB -->
+                        <div class="tab-content" id="tab-connection">
+                            <h3 style="font-size: 0.9rem; color: var(--neon-bright); margin: 0 0 12px;">${t('settings.reaper_bridge_title')}</h3>
+
+                            <label class="modal-label">Bridge Data</label>
+                            <input type="text" class="modal-input" id="bridgeDirInput"
+                                   value="${settings.bridge_dir || getDefaultBridgeDir()}"
+                                   placeholder="${getDefaultBridgeDir()}">
+                            <p class="modal-text" style="font-size: 0.75rem; margin-top: -8px; color: var(--text-muted);">
+                                ${t('settings.bridge_dir_hint')}
+                            </p>
+
+                            <label class="modal-label" style="margin-top: 15px;">MCP Profile</label>
+                            <select class="modal-input" id="mcpProfileSelect" style="padding: 14px;">
+                                <option value="auto" ${settings.mcp_profile === 'auto' ? 'selected' : ''}>
+                                    ${t('settings.profile_auto')}
+                                </option>
+                                <option value="dsl-production" ${settings.mcp_profile === 'dsl-production' || (!settings.mcp_profile) ? 'selected' : ''}>
+                                    ${t('settings.profile_dsl')}
+                                </option>
+                                <option value="dsl" ${settings.mcp_profile === 'dsl' ? 'selected' : ''}>
+                                    ${t('settings.profile_minimal')}
+                                </option>
+                                <option value="groq-essential" ${settings.mcp_profile === 'groq-essential' ? 'selected' : ''}>
+                                    ${t('settings.profile_groq')}
+                                </option>
+                                <option value="full" ${settings.mcp_profile === 'full' ? 'selected' : ''}>
+                                    Full
+                                </option>
+                            </select>
+                            <p class="modal-text" style="font-size: 0.72rem; margin-top: -5px; color: var(--text-muted);">
+                                ${t('settings.profile_hint')}
+                            </p>
+
+                            <button class="test-btn" id="testBridgeBtn" style="margin-top: 15px;">
+                                ${t('settings.testing_mcp')}
+                            </button>
+                            <div id="bridgeTestResult"></div>
+
+                            <!-- LUA BRIDGE -OHJEET -->
+                            <div id="luaBridgeHelp" style="display: none; margin-top: 15px; padding: 15px;
+                                 background: rgba(162,117,72,0.1); border: 1px solid var(--neon-primary);
+                                 border-radius: 10px; font-size: 0.85rem;">
+                                <strong style="color: var(--neon-bright);">📘 Lua Bridge:</strong>
+                                <ol style="margin: 10px 0 0 20px; line-height: 1.8;">
+                                    <li>${t('settings.open_reaper')}</li>
+                                    <li>Actions → Show action list</li>
+                                    <li>${t('settings.load_bridge')}</li>
+                                    <li>${t('settings.press_run')}</li>
+                                    <li>${t('settings.check_console')}</li>
+                                </ol>
+                                <p style="margin-top: 10px; color: var(--text-muted);">
+                                    Bridge: <code>total-reaper-mcp/lua/mcp_bridge.lua</code>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- API-AVAIMET TAB -->
+                        <div class="tab-content" id="tab-apikeys">
+                            <h3 style="font-size: 0.9rem; color: var(--neon-bright); margin: 0 0 12px;">${t('settings.api_keys_title')}</h3>
+                            <p class="modal-text" style="font-size: 0.8rem; margin-bottom: 15px; color: var(--text-muted);">
+                                ${t('settings.api_keys_hint')}
+                            </p>
+
+                            <div id="apiKeysStatus" style="margin-bottom: 15px; padding: 12px; border-radius: 8px;
+                                 background: rgba(30, 25, 40, 0.5); border: 1px solid var(--border-subtle);">
+                                <p style="color: var(--text-muted); font-size: 0.8rem;">...</p>
+                            </div>
+
+                            <label class="modal-label">Groq API</label>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <input type="password" class="modal-input" id="groqApiKeyInput"
+                                       placeholder="gsk_..." style="flex: 1;">
+                                <button class="toggle-key-btn" data-target="groqApiKeyInput"
+                                        style="padding: 8px 12px; background: rgba(162,117,72,0.2); border: 1px solid var(--border-subtle);
+                                               color: var(--text-primary); border-radius: 6px; cursor: pointer; font-size: 0.8rem;">👁</button>
+                            </div>
+                            <p class="modal-text" style="font-size: 0.72rem; margin-top: -8px; color: var(--text-muted);">
+                                ${t('settings.provider_groq_hint')} <a href="https://console.groq.com" target="_blank" style="color: var(--neon-primary);">console.groq.com</a>
+                            </p>
+
+                            <label class="modal-label" style="margin-top: 12px;">Google Gemini API</label>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <input type="password" class="modal-input" id="googleApiKeyInput"
+                                       placeholder="AIza..." style="flex: 1;">
+                                <button class="toggle-key-btn" data-target="googleApiKeyInput"
+                                        style="padding: 8px 12px; background: rgba(162,117,72,0.2); border: 1px solid var(--border-subtle);
+                                               color: var(--text-primary); border-radius: 6px; cursor: pointer; font-size: 0.8rem;">👁</button>
+                            </div>
+                            <p class="modal-text" style="font-size: 0.72rem; margin-top: -8px; color: var(--text-muted);">
+                                ${t('settings.provider_google_hint')} <a href="https://aistudio.google.com" target="_blank" style="color: var(--neon-primary);">aistudio.google.com</a>
+                            </p>
+
+                            <label class="modal-label" style="margin-top: 12px;">OpenRouter API</label>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <input type="password" class="modal-input" id="openrouterApiKeyInput"
+                                       placeholder="sk-or-v1-..." style="flex: 1;">
+                                <button class="toggle-key-btn" data-target="openrouterApiKeyInput"
+                                        style="padding: 8px 12px; background: rgba(162,117,72,0.2); border: 1px solid var(--border-subtle);
+                                               color: var(--text-primary); border-radius: 6px; cursor: pointer; font-size: 0.8rem;">👁</button>
+                            </div>
+                            <p class="modal-text" style="font-size: 0.72rem; margin-top: -8px; color: var(--text-muted);">
+                                ${t('settings.provider_openrouter_hint')} <a href="https://openrouter.ai" target="_blank" style="color: var(--neon-primary);">openrouter.ai</a>
+                            </p>
+
+                            <button class="save-modal-btn" id="saveApiKeysBtn" style="margin-top: 15px; background: rgba(162, 117, 72, 0.3);">
+                                ${t('settings.save_api_keys')}
+                            </button>
+                            <div id="apiKeySaveResult" style="margin-top: 10px; font-size: 0.85rem;"></div>
+
+                            <div style="margin-top: 15px; padding: 12px; border-radius: 8px;
+                                 background: rgba(162,117,72,0.08); border: 1px solid rgba(162,117,72,0.2); font-size: 0.8rem;">
+                                <p style="color: var(--text-muted); margin-top: 5px; line-height: 1.5;">
+                                    ${t('settings.setup_step_1')}<br>
+                                    ${t('settings.setup_step_2')}<br>
+                                    ${t('settings.setup_step_3')}<br>
+                                    ${t('settings.setup_step_4')}<br>
+                                    ${t('settings.setup_step_5')}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- KIELI / LANGUAGE TAB -->
+                        <div class="tab-content" id="tab-language">
+                            <h3 style="font-size: 0.9rem; color: var(--neon-bright); margin: 0 0 12px;">${t('settings.language_title')}</h3>
+                            <p class="modal-text" style="font-size: 0.8rem; margin-bottom: 15px; color: var(--text-muted);">
+                                ${t('settings.language_hint')}
+                            </p>
+                            <div style="display: flex; gap: 12px;">
+                                <button class="filter-btn lang-btn ${currentLocale === 'fi' ? 'active' : ''}" data-lang="fi"
+                                        style="flex: 1; padding: 16px; border: 1px solid var(--border-subtle);
+                                               background: ${currentLocale === 'fi' ? 'rgba(162, 117, 72, 0.2)' : 'transparent'};
+                                               color: var(--text-primary); border-radius: 10px; cursor: pointer; font-size: 1rem;">
+                                    🇫🇮 ${t('settings.language_fi')}
+                                </button>
+                                <button class="filter-btn lang-btn ${currentLocale === 'en' ? 'active' : ''}" data-lang="en"
+                                        style="flex: 1; padding: 16px; border: 1px solid var(--border-subtle);
+                                               background: ${currentLocale === 'en' ? 'rgba(162, 117, 72, 0.2)' : 'transparent'};
+                                               color: var(--text-primary); border-radius: 10px; cursor: pointer; font-size: 1rem;">
+                                    🇬🇧 ${t('settings.language_en')}
+                                </button>
+                            </div>
+                        </div>
+
+                        <button class="save-modal-btn" id="saveSettingsBtn" style="margin-top: 20px;">${t('buttons.save_and_close')}</button>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+
+                // Välilehti-toiminnallisuus
+                document.querySelectorAll('.settings-tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        // Poista active kaikilta
+                        document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+                        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+                        // Lisää active valitulle
+                        tab.classList.add('active');
+                        const tabId = 'tab-' + tab.dataset.tab;
+                        document.getElementById(tabId).classList.add('active');
+                    });
+                });
+
+                // Language buttons
+                document.querySelectorAll('.lang-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const lang = btn.dataset.lang;
+                        if (lang !== currentLocale) {
+                            await setLanguage(lang);
+                            overlay.remove();
+                            showSettingsModal(); // reopen with new language
+                        }
+                    });
+                });
+
+                setupBridgeTest();
+                setupSaveSettings();
+                setupApiKeys();
+
+
+
+                // Päivitä Reaper-info kun asetukset avataan
+                loadReaperInfo();
+
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) overlay.remove();
+                });
+
+                // Lataa mallit asynkronisesti modalin avaamisen jälkeen
+                (async () => {
+                    try {
+                        const [availableResp, selectedResp] = await Promise.all([
+                            fetch('/api/available-models'),
+                            fetch('/api/selected-models')
+                        ]);
+
+                        const availableModels = await availableResp.json();
+                        const selectedModels = await selectedResp.json();
+
+                        // Päivitä models-grid
+                        const modelsGrid = document.getElementById('modelsGrid');
+                        if (modelsGrid) {
+                            modelsGrid.innerHTML = renderModelCheckboxes(availableModels, selectedModels);
+                            setupModelCheckboxes(); // Aseta event listenerit uudelleen
+                        }
+                    } catch (error) {
+                        console.error('Model loading failed:', error);
+                        const modelsGrid = document.getElementById('modelsGrid');
+                        if (modelsGrid) {
+                            modelsGrid.innerHTML = `<p style="color: var(--text-muted); text-align: center; padding: 40px;">${t('settings.models_load_failed')}</p>`;
+                        }
+                    }
+                })();
+
+            } catch (error) {
+                console.error('Settings error:', error.message);
+            }
+        }
+
+        // Määritä tekoälyn laatutaso ja suositeltu MCP-profiili
+        function getModelQualityInfo(model, providerName) {
+            const id = model.id.toLowerCase();
+            const contextK = model.context ? Math.round(model.context / 1000) : 0;
+
+            // Premium-mallit: paras laatu, tukevat Full-profiilia
+            if (id.includes('opus') || id.includes('gemini-2.5-pro') || id.includes('gpt-4-turbo') || id.includes('gpt-4o')) {
+                return { label: t('models.quality_excellent'), color: '#4ade80', mcpProfile: 'DSL Production' };
+            }
+            if (id.includes('sonnet') || id.includes('gemini-2.5-flash') || id.includes('llama-3.3-70b') || id.includes('claude-3.5') || id.includes('claude-4')) {
+                return { label: t('models.quality_good'), color: '#60a5fa', mcpProfile: 'DSL Production' };
+            }
+            // Toimivat mallit
+            if (id.includes('gemini-2.0-flash') || id.includes('llama-3.1-70b') || id.includes('mixtral') || id.includes('qwen')) {
+                return { label: t('models.quality_working'), color: '#fbbf24', mcpProfile: 'DSL Production' };
+            }
+            if (id.includes('gemini-2.0-flash-lite') || id.includes('llama-3.2') || id.includes('gemma') || id.includes('haiku') || id.includes('phi-')) {
+                return { label: t('models.quality_basic'), color: '#fb923c', mcpProfile: 'Groq Essential' };
+            }
+            if (providerName.toLowerCase() === 'groq') {
+                return { label: contextK > 30 ? t('models.quality_working') : t('models.quality_basic'), color: contextK > 30 ? '#fbbf24' : '#fb923c', mcpProfile: 'Groq Essential' };
+            }
+            if (providerName.toLowerCase() === 'google') {
+                return { label: t('models.quality_working'), color: '#fbbf24', mcpProfile: 'DSL Production' };
+            }
+            if (contextK >= 100) {
+                return { label: t('models.quality_working'), color: '#fbbf24', mcpProfile: 'DSL Production' };
+            }
+            if (contextK >= 30) {
+                return { label: t('models.quality_basic'), color: '#fb923c', mcpProfile: 'DSL Production' };
+            }
+            return { label: t('models.quality_unknown'), color: '#a8a0b8', mcpProfile: 'DSL Production' };
+        }
+
+        function renderModelCheckboxes(available, selected) {
+            // Hae suosikit localStoragesta (synkroninen)
+            const favorites = JSON.parse(localStorage.getItem('modelFavorites') || '[]');
+
+            // Normalisoi selected array (voi olla strings tai objects)
+            const selectedIds = Array.isArray(selected) ?
+                selected.map(s => typeof s === 'string' ? s : s.id) : [];
+
+            let html = '';
+
+            // Renderöi yhden palvelun mallit
+            function renderProvider(providerName, models) {
+                if (!models || models.length === 0) return '';
+
+                let providerHtml = `<div class="model-provider-section" data-provider="${providerName.toLowerCase()}">`;
+                providerHtml += `<h4 class="provider-title" style="font-size: 0.8rem; color: var(--neon-primary); margin: 15px 0 10px; text-transform: uppercase; letter-spacing: 1px;">${providerName}</h4>`;
+
+                models.forEach(model => {
+                    const isSelected = selectedIds.includes(model.id);
+                    const isFavorite = favorites.includes(model.id);
+                    // Näytä oikea hinta-merkintä
+                    let priceLabel;
+                    if (model.isFree === true) {
+                        priceLabel = '✅ ILMAINEN';
+                    } else if (model.isLowCost === true) {
+                        priceLabel = '💰 Halpa';
+                    } else if (model.pricing < 1) {
+                        priceLabel = '💰💰 Keskihinta';
+                    } else {
+                        priceLabel = '💰💰💰 Kallis';
+                    }
+
+                    // Määritä tekoälyn laatutaso ja suositeltu MCP-profiili
+                    const qualityInfo = getModelQualityInfo(model, providerName);
+                    const hasToolcall = model.hasToolcall !== false && (
+                        providerName.toLowerCase() === 'google' ||
+                        model.id.includes('llama-3') ||
+                        model.id.includes('claude') ||
+                        model.id.includes('gpt')
+                    );
+
+                    providerHtml += `
+                        <div class="model-checkbox-item"
+                             data-model-id="${model.id}"
+                             data-model-name="${model.name.toLowerCase()}"
+                             data-is-free="${model.isFree}"
+                             data-is-favorite="${isFavorite}"
+                             data-has-toolcall="${hasToolcall}"
+                             data-provider="${providerName.toLowerCase()}">
+                            <label style="display: flex; align-items: flex-start; cursor: pointer;">
+                                <input type="checkbox" name="model" value="${model.id}"
+                                       ${isSelected ? 'checked' : ''}
+                                       style="margin-right: 12px; width: 18px; height: 18px; margin-top: 4px;">
+                                <div style="flex: 1;">
+                                    <div style="font-size: 0.95rem; margin-bottom: 2px;">
+                                        ${model.icon} <strong>${model.name}</strong>
+                                        ${isSelected ? '<span style="font-size: 0.7rem; background: var(--neon-primary); color: #000; padding: 1px 5px; border-radius: 3px; margin-left: 6px;">VALITTU</span>' : ''}
+                                    </div>
+                                    <div style="font-size: 0.72rem; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
+                                        <span>${model.context ? Math.round(model.context/1000) + 'k' : '?'}</span>
+                                        <span>•</span>
+                                        <span>${priceLabel}</span>
+                                        <span>•</span>
+                                        <span style="color: ${qualityInfo.color};">${qualityInfo.label}</span>
+                                        ${hasToolcall ? '<span style="color: #4ade80;">🔧</span>' : ''}
+                                    </div>
+                                    <div style="font-size: 0.68rem; color: var(--text-muted); margin-top: 2px;">
+                                        MCP: ${qualityInfo.mcpProfile}
+                                    </div>
+                                </div>
+                                <span class="favorite-star" data-model="${model.id}"
+                                      style="cursor: pointer; font-size: 1.3rem; margin-left: 10px; user-select: none;">
+                                    ${isFavorite ? '⭐' : '☆'}
+                                </span>
+                            </label>
+                        </div>
+                    `;
+                });
+
+                providerHtml += '</div>';
+                return providerHtml;
+            }
+
+            // Renderöi kaikki palvelut
+            html += renderProvider('Groq', available.groq);
+            html += renderProvider('OpenRouter', available.openrouter);
+            html += renderProvider('Google', available.google);
+
+            // Jos ei malleja
+            if (!available.groq?.length && !available.openrouter?.length && !available.google?.length) {
+                html = '<p style="color: var(--text-muted); padding: 20px; text-align: center;">Ei malleja saatavilla. Tarkista API-avaimet .env-tiedostosta.</p>';
+            }
+
+            return html;
+        }
+
+        function getDefaultBridgeDir() {
+            const isWindows = navigator.platform.toLowerCase().includes('win');
+            const isMac = navigator.platform.toLowerCase().includes('mac');
+
+            if (isWindows) {
+                return '%APPDATA%\\REAPER\\Scripts\\mcp_bridge_data';
+            } else if (isMac) {
+                return '~/Library/Application Support/REAPER/Scripts/mcp_bridge_data';
+            } else {
+                return '~/.config/REAPER/Scripts/mcp_bridge_data';
+            }
+        }
+
+        function setupModelCheckboxes() {
+            const modelMessage = document.getElementById('modelMessage');
+
+            function showMessage(text, duration = 3000) {
+                if (modelMessage) {
+                    modelMessage.textContent = text;
+                    modelMessage.style.display = 'block';
+                    setTimeout(() => { modelMessage.style.display = 'none'; }, duration);
+                }
+            }
+
+            const checkboxes = document.querySelectorAll('input[name="model"]');
+            checkboxes.forEach(cb => {
+                cb.addEventListener('change', () => {
+                    const checked = document.querySelectorAll('input[name="model"]:checked');
+                    if (checked.length > 5) {
+                        cb.checked = false;
+                        showMessage('⚠️ Voit valita maksimissaan 5 mallia.');
+                    }
+                });
+            });
+
+            // Suosikki-tähtien käsittely
+            document.querySelectorAll('.favorite-star').forEach(star => {
+                star.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const modelId = star.dataset.model;
+                    const favorites = JSON.parse(localStorage.getItem('modelFavorites') || '[]');
+
+                    if (favorites.includes(modelId)) {
+                        // Poista suosikki
+                        const index = favorites.indexOf(modelId);
+                        favorites.splice(index, 1);
+                        star.textContent = '☆';
+                        star.closest('.model-checkbox-item').dataset.isFavorite = 'false';
+                    } else {
+                        // Lisää suosikki
+                        favorites.push(modelId);
+                        star.textContent = '⭐';
+                        star.closest('.model-checkbox-item').dataset.isFavorite = 'true';
+                    }
+
+                    localStorage.setItem('modelFavorites', JSON.stringify(favorites));
+                });
+            });
+
+            // Hakukenttä
+            const searchInput = document.getElementById('modelSearch');
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    const searchTerm = e.target.value.toLowerCase();
+                    document.querySelectorAll('.model-checkbox-item').forEach(item => {
+                        const modelName = item.dataset.modelName || '';
+                        if (modelName.includes(searchTerm)) {
+                            item.style.display = '';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+                });
+            }
+
+            // Filtterit (usean valinnan tuki)
+            function applyFilters() {
+                // Hae kaikki aktiiviset filtterit
+                const activeFilterBtns = Array.from(document.querySelectorAll('.filter-btn.active'));
+                const activeFilters = activeFilterBtns.map(btn => btn.dataset.filter);
+
+                // Jos "all" on mukana tai ei aktiivisia filttereitä, näytä kaikki
+                if (activeFilters.length === 0 || activeFilters.includes('all')) {
+                    document.querySelectorAll('.model-checkbox-item').forEach(item => {
+                        item.style.display = '';
+                    });
+                    return;
+                }
+
+                // Erottele provider-filtterit ja feature-filtterit
+                const providerFilters = activeFilterBtns
+                    .filter(btn => btn.dataset.filterType === 'provider')
+                    .map(btn => btn.dataset.filter);
+                const featureFilters = activeFilterBtns
+                    .filter(btn => btn.dataset.filterType === 'feature')
+                    .map(btn => btn.dataset.filter);
+
+                document.querySelectorAll('.model-checkbox-item').forEach(item => {
+                    let show = true;
+
+                    // Provider-filtterit: OR-logiikka (täytyy olla JOKU valituista providereista)
+                    if (providerFilters.length > 0) {
+                        const matchesProvider = providerFilters.includes(item.dataset.provider);
+                        if (!matchesProvider) {
+                            show = false;
+                        }
+                    }
+
+                    // Feature-filtterit: AND-logiikka (täytyy täyttää KAIKKI)
+                    if (show && featureFilters.length > 0) {
+                        for (const filter of featureFilters) {
+                            if (filter === 'free') {
+                                if (item.dataset.isFree !== 'true') {
+                                    show = false;
+                                    break;
+                                }
+                            } else if (filter === 'toolcall') {
+                                if (item.dataset.hasToolcall !== 'true') {
+                                    show = false;
+                                    break;
+                                }
+                            } else if (filter === 'favorites') {
+                                if (item.dataset.isFavorite !== 'true') {
+                                    show = false;
+                                    break;
+                                }
+                            } else if (filter === 'selected') {
+                                const checkbox = item.querySelector('input[type="checkbox"]');
+                                if (!checkbox || !checkbox.checked) {
+                                    show = false;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    item.style.display = show ? '' : 'none';
+                });
+            }
+
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const filter = btn.dataset.filter;
+
+                    // Jos "all" klikataan, poista kaikki muut
+                    if (filter === 'all') {
+                        document.querySelectorAll('.filter-btn').forEach(b => {
+                            b.classList.remove('active');
+                            b.style.background = 'transparent';
+                        });
+                        btn.classList.add('active');
+                        btn.style.background = 'rgba(162, 117, 72, 0.2)';
+                    } else {
+                        // Muuten toggle aktiivisuus
+                        // Poista "all" jos valitaan joku muu
+                        const allBtn = document.querySelector('.filter-btn[data-filter="all"]');
+                        if (allBtn) {
+                            allBtn.classList.remove('active');
+                            allBtn.style.background = 'transparent';
+                        }
+
+                        // Toggle tämä filtteri
+                        if (btn.classList.contains('active')) {
+                            btn.classList.remove('active');
+                            btn.style.background = 'transparent';
+                        } else {
+                            btn.classList.add('active');
+                            btn.style.background = 'rgba(162, 117, 72, 0.2)';
+                        }
+                    }
+
+                    applyFilters();
+                });
+            });
+        }
+
+        function setupBridgeTest() {
+            document.getElementById('testBridgeBtn').addEventListener('click', async () => {
+                const resultDiv = document.getElementById('bridgeTestResult');
+                const helpDiv = document.getElementById('luaBridgeHelp');
+
+                resultDiv.innerHTML = 'Testataan MCP-yhteyttä...';
+                resultDiv.className = 'test-result';
+                helpDiv.style.display = 'none';
+
+                try {
+                    const response = await fetch('/api/reaper-test');
+                    const data = await response.json();
+
+                    if (data.connected) {
+                        resultDiv.innerHTML = `✅ Yhteys toimii!<br>
+                            REAPER: ${data.reaper_version || 'Unknown'}<br>
+                            Projekti: ${data.project_name || 'Untitled'}<br>
+                            Raitoja: ${data.track_count || 0}`;
+                        resultDiv.className = 'test-result success';
+                    } else {
+                        resultDiv.innerHTML = `❌ ${t('settings.no_connection')} ${data.error || t('errors.unknown')}`;
+                        resultDiv.className = 'test-result error';
+                        helpDiv.style.display = 'block';
+                    }
+                } catch (error) {
+                    resultDiv.innerHTML = '❌ ' + t('errors.generic') + ' ' + error.message;
+                    resultDiv.className = 'test-result error';
+                    helpDiv.style.display = 'block';
+                }
+            });
+        }
+
+        function setupSaveSettings() {
+            const saveBtn = document.getElementById('saveSettingsBtn');
+            console.log('🔍 setupSaveSettings kutsuttu, nappi:', saveBtn);
+
+            if (!saveBtn) {
+                console.error('❌ saveSettingsBtn ei löytynyt DOM:ista!');
+                return;
+            }
+
+            const modelMessage = document.getElementById('modelMessage');
+
+            function showMessage(text) {
+                if (modelMessage) {
+                    modelMessage.textContent = text;
+                    modelMessage.style.display = 'block';
+                    setTimeout(() => { modelMessage.style.display = 'none'; }, 3000);
+                }
+            }
+
+            console.log('✅ Event listener lisätään nappiin...');
+
+            // Poista vanhat event listenerit kloonaamalla nappi
+            const newSaveBtn = saveBtn.cloneNode(true);
+            saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+
+            newSaveBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('💾 Nappia painettu! Tallennetaan asetukset...');
+
+                const bridgeDir = document.getElementById('bridgeDirInput')?.value;
+                const mcpProfile = document.getElementById('mcpProfileSelect')?.value;
+                const selectedModels = Array.from(document.querySelectorAll('input[name="model"]:checked'))
+                    .map(cb => cb.value);
+
+                // Tarkista onko API-avaimia syötetty
+                const groqVal = document.getElementById('groqApiKeyInput')?.value?.trim() || '';
+                const googleVal = document.getElementById('googleApiKeyInput')?.value?.trim() || '';
+                const openrouterVal = document.getElementById('openrouterApiKeyInput')?.value?.trim() || '';
+                const hasNewApiKeys = groqVal || googleVal || openrouterVal;
+
+                // Jos API-avaimia syötetty, tallenna ne ensin
+                if (hasNewApiKeys) {
+                    const keys = {};
+                    if (groqVal) keys.GROQ_API_KEY = groqVal;
+                    if (googleVal) keys.GOOGLE_API_KEY = googleVal;
+                    if (openrouterVal) keys.OPENROUTER_API_KEY = openrouterVal;
+
+                    try {
+                        await fetch('/api/api-keys', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(keys)
+                        });
+                        console.log('✅ API-avaimet tallennettu');
+                    } catch (apiErr) {
+                        console.error('❌ API-avainten tallennus epäonnistui:', apiErr);
+                    }
+                }
+
+                // Tarkista mallivalinta vain jos ei ole uusia API-avaimia
+                if (selectedModels.length === 0 && !hasNewApiKeys) {
+                    showMessage('⚠️ ' + t('settings.select_model_error'));
+                    return;
+                }
+
+                try {
+                    // Tallenna muut asetukset jos malleja valittu
+                    if (selectedModels.length > 0) {
+                        await fetch('/api/settings', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                bridge_dir: bridgeDir,
+                                mcp_profile: mcpProfile,
+                                selected_models: selectedModels
+                            })
+                        });
+                        await updateModelDropdown();
+                    }
+
+                    await loadReaperInfo();
+
+                    console.log('✅ Asetukset tallennettu, suljetaan...');
+
+                    // Sulje modal
+                    const overlay = document.querySelector('.modal-overlay');
+                    if (overlay) {
+                        overlay.remove();
+                        console.log('✅ Modal suljettu');
+                    }
+                } catch (error) {
+                    console.error('Save error:', error);
+                    showMessage('❌ ' + t('errors.generic') + ' ' + error.message);
+                }
+            });
+        }
+
+        function setupApiKeys() {
+            // Lataa avainten tila
+            (async () => {
+                try {
+                    const resp = await fetch('/api/api-keys');
+                    const data = await resp.json();
+                    const statusDiv = document.getElementById('apiKeysStatus');
+                    if (statusDiv) {
+                        statusDiv.innerHTML = `
+                            <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Groq</span>
+                                    <span style="color: ${data.groq ? '#4CAF50' : '#ff5252'};">${data.groq ? t('settings.api_key_set') : t('settings.api_key_missing')}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Google Gemini</span>
+                                    <span style="color: ${data.google ? '#4CAF50' : '#ff5252'};">${data.google ? t('settings.api_key_set') : t('settings.api_key_missing')}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>OpenRouter</span>
+                                    <span style="color: ${data.openrouter ? '#4CAF50' : '#ff5252'};">${data.openrouter ? t('settings.api_key_set') : t('settings.api_key_missing')}</span>
+                                </div>
+                            </div>`;
+                    }
+                    // Pre-fill masked values
+                    if (data.groq) document.getElementById('groqApiKeyInput').placeholder = data.groq_masked;
+                    if (data.google) document.getElementById('googleApiKeyInput').placeholder = data.google_masked;
+                    if (data.openrouter) document.getElementById('openrouterApiKeyInput').placeholder = data.openrouter_masked;
+                } catch (e) {
+                    console.error('API key status load failed:', e);
+                }
+            })();
+
+            // Toggle password visibility
+            document.querySelectorAll('.toggle-key-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const input = document.getElementById(btn.dataset.target);
+                    if (input) {
+                        input.type = input.type === 'password' ? 'text' : 'password';
+                        btn.textContent = input.type === 'password' ? '\u{1F441}' : '\u{1F512}';
+                    }
+                });
+            });
+
+            // Save API keys
+            const saveApiBtn = document.getElementById('saveApiKeysBtn');
+            if (saveApiBtn) {
+                saveApiBtn.addEventListener('click', async () => {
+                    const resultDiv = document.getElementById('apiKeySaveResult');
+                    const keys = {};
+                    const groqVal = document.getElementById('groqApiKeyInput').value.trim();
+                    const googleVal = document.getElementById('googleApiKeyInput').value.trim();
+                    const openrouterVal = document.getElementById('openrouterApiKeyInput').value.trim();
+
+                    if (groqVal) keys.GROQ_API_KEY = groqVal;
+                    if (googleVal) keys.GOOGLE_API_KEY = googleVal;
+                    if (openrouterVal) keys.OPENROUTER_API_KEY = openrouterVal;
+
+                    if (Object.keys(keys).length === 0) {
+                        if (resultDiv) {
+                            resultDiv.innerHTML = '<span style="color: #ff9800;">' + t('settings.enter_api_key_error') + '</span>';
+                            setTimeout(() => { resultDiv.innerHTML = ''; }, 3000);
+                        }
+                        return;
+                    }
+
+                    try {
+                        saveApiBtn.disabled = true;
+                        saveApiBtn.textContent = '...';
+                        const resp = await fetch('/api/api-keys', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(keys)
+                        });
+                        const result = await resp.json();
+                        if (result.success) {
+                            if (resultDiv) {
+                                resultDiv.innerHTML = '<span style="color: #4CAF50;">' + t('settings.api_keys_saved') + '</span>';
+                            }
+                            document.getElementById('groqApiKeyInput').value = '';
+                            document.getElementById('googleApiKeyInput').value = '';
+                            document.getElementById('openrouterApiKeyInput').value = '';
+                            setupApiKeys();
+                        } else {
+                            if (resultDiv) {
+                                resultDiv.innerHTML = '<span style="color: #ff5252;">' + t('settings.api_keys_save_failed') + ' ' + (result.error || t('errors.unknown')) + '</span>';
+                            }
+                        }
+                    } catch (e) {
+                        if (resultDiv) {
+                            resultDiv.innerHTML = '<span style="color: #ff5252;">' + t('settings.api_keys_save_failed') + ' ' + e.message + '</span>';
+                        }
+                    } finally {
+                        saveApiBtn.disabled = false;
+                        saveApiBtn.textContent = t('settings.save_api_keys');
+                    }
+                });
+            }
+        }
+
+        async function updateModelDropdown() {
+            const response = await fetch('/api/selected-models');
+            const selected = await response.json();
+
+            const modelSelect = document.getElementById('modelSelect');
+            modelSelect.innerHTML = '';
+
+            selected.forEach(model => {
+                const option = document.createElement('option');
+                option.value = model.id;
+                option.textContent = `${model.icon} ${model.name}`;
+                modelSelect.appendChild(option);
+            });
+        }
+
+        // VST Modal
+        async function loadVSTPlugins() {
+            try {
+                const response = await fetch('/api/vst-plugins');
+                const data = await response.json();
+                vstPlugins = data.plugins || [];
+                vstBtn.textContent = t('sidebar.vst_plugins') + ' (' + vstPlugins.length + ')';
+            } catch (error) { console.error('VST load failed:', error); }
+        }
+        function showVSTModal() {
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.innerHTML = `
+                <div class="modal">
+                    <h2>${t('vst.title')}</h2>
+                    <p class="modal-text">${vstPlugins.length} ${t('vst.plugins_found')}</p>
+                    <input type="text" class="search-input" id="vstSearchInput" placeholder="${t('vst.search_placeholder')}" autocomplete="off">
+                    <ul class="vst-list" id="vstList">
+                        ${vstPlugins.length > 0 ? vstPlugins.map(p => '<li class="vst-item">' + p.name + '</li>').join('') : '<li class="vst-item">' + t('vst.no_plugins') + '</li>'}
+                    </ul>
+                    <button class="close-modal-btn" onclick="this.closest('.modal-overlay').remove()">${t('buttons.close')}</button>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+            const searchInput = document.getElementById('vstSearchInput');
+            const vstList = document.getElementById('vstList');
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase();
+                const filtered = vstPlugins.filter(p => p.name.toLowerCase().includes(query));
+                vstList.innerHTML = filtered.length > 0 ? filtered.map(p => '<li class="vst-item">' + p.name + '</li>').join('') : '<li class="vst-item">' + t('vst.no_plugins') + '</li>';
+            });
+            searchInput.focus();
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+        }
+
+        // Studio Setup Modal
+        async function showStudioSetupModal() {
+            try {
+                const response = await fetch('/api/studio-setup');
+                const data = await response.json();
+                const overlay = document.createElement('div');
+                overlay.className = 'modal-overlay';
+                overlay.innerHTML = `
+                    <div class="modal">
+                        <h2>${t('studio.title')}</h2>
+                        <p class="modal-text">${t('studio.description')}</p>
+                        <textarea class="studio-input" id="studioInput" placeholder="${t('studio.placeholder')}">${data.description || ''}</textarea>
+                        <button class="save-modal-btn" id="saveStudioBtn">${t('buttons.save')}</button>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+                document.getElementById('saveStudioBtn').addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('💾 Studio Tallenna -nappia painettu');
+                    const desc = document.getElementById('studioInput').value;
+                    await fetch('/api/studio-setup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ description: desc }) });
+                    overlay.remove();
+                    console.log('✅ Studio modal suljettu');
+                });
+                overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+            } catch (error) { console.error('Studio setup virhe:', error); }
+        }
+
+        // Conversations
+        async function loadConversations() {
+            try {
+                const response = await fetch('/api/conversations');
+                const data = await response.json();
+                conversations = Array.isArray(data) ? data : [];
+                renderConversations();
+                if (!currentConversationId && conversations.length > 0) selectConversation(conversations[0].id);
+            } catch (error) { console.error('Load conversations failed:', error); }
+        }
+        function renderConversations() {
+            conversationsList.innerHTML = '';
+            conversations.forEach(conv => {
+                const div = document.createElement('div');
+                div.className = 'conversation-item' + (conv.id === currentConversationId ? ' active' : '') + (conv.pinned ? ' pinned' : '');
+                div.textContent = conv.pinned ? '📌 ' + conv.title : conv.title;
+                div.addEventListener('click', () => { selectConversation(conv.id); closeSidebar(); });
+                div.addEventListener('contextmenu', (e) => { e.preventDefault(); showContextMenu(e, conv); });
+                conversationsList.appendChild(div);
+            });
+        }
+        async function selectConversation(id) {
+            currentConversationId = id;
+            const conv = conversations.find(c => c.id === id);
+            if (!conv) return;
+            currentConversationPinned = conv.pinned === 1;
+            chatTitle.textContent = conv.title;
+            renderConversations();
+            await loadMessages(id);
+            messageInput.disabled = false;
+            sendBtn.disabled = false;
+            messageInput.focus();
+        }
+        async function loadMessages(conversationId) {
+            try {
+                const response = await fetch('/api/conversations/' + conversationId + '/messages');
+                const messages = await response.json();
+                messagesArea.innerHTML = '';
+                messages.forEach(msg => addMessageToUI(msg));
+                scrollToBottom();
+            } catch (error) { console.error('Load messages failed:', error); }
+        }
+        function addMessageToUI(msg) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ' + msg.sender;
+            const time = new Date(msg.timestamp).toLocaleTimeString('fi-FI', { hour: '2-digit', minute: '2-digit' });
+            const displayName = msg.sender === 'user' ? 'Sinä' : (modelNames[msg.model] || msg.model);
+            messageDiv.innerHTML = '<div class="message-header"><span class="message-sender">' + displayName + '</span><span>' + time + '</span></div><div class="message-bubble">' + escapeHtml(msg.content) + '</div>';
+            messagesArea.appendChild(messageDiv);
+        }
+        function showTypingIndicator() {
+            isAIThinking = true;
+            startNeonFlicker();
+            const typing = document.createElement('div');
+            typing.className = 'typing-indicator';
+            typing.id = 'typingIndicator';
+            typing.innerHTML = '<span class="typing-text">' + (modelNames[modelSelect.value] || modelSelect.value) + ' miettii</span><div class="typing-dots"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>';
+            messagesArea.appendChild(typing);
+            scrollToBottom();
+        }
+        function hideTypingIndicator() {
+            isAIThinking = false;
+            stopNeonFlicker();
+            const typing = document.getElementById('typingIndicator');
+            if (typing) typing.remove();
+        }
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message || isSending || !currentConversationId) return;
+            isSending = true;
+            messageInput.value = '';
+            sendBtn.disabled = true;
+
+            // Lisää analyysitila viestiin jos päällä
+            let finalMessage = message;
+            if (analyzeModeActive) {
+                finalMessage = '[ANALYZE_MODE] ' + message;
+            }
+
+            addMessageToUI({ sender: 'user', content: message, model: modelSelect.value, timestamp: new Date().toISOString() });
+            scrollToBottom();
+            showTypingIndicator();
+            try {
+                const response = await fetch('/api/messages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ conversation_id: currentConversationId, message: finalMessage, model: modelSelect.value })
+                });
+                const data = await response.json();
+                hideTypingIndicator();
+                if (data.success) {
+                    addMessageToUI({ sender: 'ai', content: data.response, model: modelSelect.value, timestamp: new Date().toISOString() });
+                    await loadConversations();
+                    await loadReaperInfo();
+                    scrollToBottom();
+                    // Seuraa komennon käyttöä ja päivitä pikakomennot
+                    trackCommandUsage(message);
+                    renderQuickCommands();
+                } else {
+                    addMessageToUI({ sender: 'ai', content: data.error || t('errors.unknown'), model: modelSelect.value, timestamp: new Date().toISOString() });
+                }
+            } catch (error) {
+                hideTypingIndicator();
+                addMessageToUI({ sender: 'ai', content: t('errors.unknown'), model: modelSelect.value, timestamp: new Date().toISOString() });
+            } finally {
+                isSending = false;
+                sendBtn.disabled = false;
+                messageInput.focus();
+            }
+        }
+        // Näytä genre-valintamodaali
+        function showGenreSelectionModal() {
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.innerHTML = `
+                <div class="modal" style="max-width: 500px;">
+                    <h2>${t('genres.select_title')}</h2>
+                    <p class="modal-text" style="font-size: 0.85rem; margin-bottom: 20px;">
+                        ${t('genres.description')}
+                    </p>
+
+                    <div class="genre-selection" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <button class="genre-btn" data-genre="metal">🎸 Metal</button>
+                        <button class="genre-btn" data-genre="rock">🎵 Rock</button>
+                        <button class="genre-btn" data-genre="electronic">🎧 Electronic</button>
+                        <button class="genre-btn" data-genre="pop">🎤 Pop</button>
+                        <button class="genre-btn" data-genre="jazz">🎺 Jazz</button>
+                        <button class="genre-btn" data-genre="hiphop">🎤 Hiphop/Rap</button>
+                        <button class="genre-btn" data-genre="orchestral">🎻 Orchestral</button>
+                        <button class="genre-btn" data-genre="blues">🎸 Blues</button>
+                    </div>
+
+                    <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button class="close-modal-btn">${t('buttons.cancel')}</button>
+                        <button class="save-modal-btn" id="startWithoutGenres">${t('genres.start_without')}</button>
+                        <button class="save-modal-btn" id="startWithGenres">${t('buttons.start')}</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+
+            const selectedGenres = [];
+
+            // Genre-napit (ei rajoitusta)
+            overlay.querySelectorAll('.genre-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const genre = btn.dataset.genre;
+                    if (btn.classList.contains('active')) {
+                        btn.classList.remove('active');
+                        const index = selectedGenres.indexOf(genre);
+                        if (index > -1) selectedGenres.splice(index, 1);
+                    } else {
+                        btn.classList.add('active');
+                        selectedGenres.push(genre);
+                    }
+                });
+            });
+
+            // Aloita ilman valintaa
+            document.getElementById('startWithoutGenres').addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('💾 Aloita ilman valintaa -nappia painettu');
+                overlay.remove();
+                console.log('✅ Welcome modal suljettu');
+                await createNewConversationWithGenres([]);
+            });
+
+            // Aloita valituilla genreillä
+            document.getElementById('startWithGenres').addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('💾 Aloita valituilla genreillä -nappia painettu, genret:', selectedGenres);
+                overlay.remove();
+                console.log('✅ Welcome modal suljettu');
+                await createNewConversationWithGenres(selectedGenres);
+            });
+
+            // Peruuta
+            overlay.querySelector('.close-modal-btn').addEventListener('click', () => {
+                overlay.remove();
+            });
+
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) overlay.remove();
+            });
+        }
+
+        // Luo uusi keskustelu genreillä
+        async function createNewConversationWithGenres(genres) {
+            try {
+                const response = await fetch('/api/conversations', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: currentLocale === 'fi' ? 'Uusi keskustelu' : 'New conversation',
+                        model: modelSelect.value,
+                        genres: genres
+                    })
+                });
+                const newConv = await response.json();
+                await loadConversations();
+                selectConversation(newConv.id);
+                closeSidebar();
+            } catch (error) {
+                console.error('Creation failed:', error);
+            }
+        }
+
+        // Vanha funktio - kutsuu genre-valintaa
+        async function createNewConversation() {
+            showGenreSelectionModal();
+        }
+        async function clearHuoltoConversation(convId) {
+            try {
+                await fetch('/api/conversations/' + convId + '/clear', { method: 'POST' });
+                if (convId === currentConversationId) await loadMessages(convId);
+            } catch (error) { console.error('Clearing failed:', error); }
+        }
+        function showContextMenu(event, conv) {
+            const oldMenu = document.querySelector('.context-menu');
+            if (oldMenu) oldMenu.remove();
+            const menu = document.createElement('div');
+            menu.className = 'context-menu';
+            menu.style.left = event.pageX + 'px';
+            menu.style.top = event.pageY + 'px';
+            if (conv.pinned && conv.title === 'Huolto') {
+                menu.innerHTML = `<div class="context-menu-item" data-action="clear">${t('context_menu.clear')}</div><div class="context-menu-item" style="color: var(--text-muted);">${t('context_menu.locked')}</div>`;
+            } else if (conv.pinned) {
+                menu.innerHTML = `<div class="context-menu-item" style="color: var(--text-muted);">${t('context_menu.locked')}</div>`;
+            } else {
+                menu.innerHTML = `<div class="context-menu-item" data-action="rename">${t('context_menu.rename')}</div><div class="context-menu-item danger" data-action="delete">${t('buttons.delete')}</div>`;
+            }
+            document.body.appendChild(menu);
+            menu.addEventListener('click', async (e) => {
+                const action = e.target.dataset.action;
+                if (action === 'rename') {
+                    const newTitle = prompt(t('buttons.rename') + ':', conv.title);
+                    if (newTitle && newTitle.trim()) {
+                        await fetch('/api/conversations/' + conv.id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: newTitle.trim() }) });
+                        await loadConversations();
+                        if (conv.id === currentConversationId) chatTitle.textContent = newTitle.trim();
+                    }
+                } else if (action === 'delete') {
+                    await fetch('/api/conversations/' + conv.id, { method: 'DELETE' });
+                    if (conv.id === currentConversationId) {
+                        currentConversationId = null;
+                        chatTitle.textContent = t('sidebar.select_conversation');
+                        messagesArea.innerHTML = '';
+                        sendBtn.disabled = true;
+                        messageInput.disabled = true;
+                    }
+                    await loadConversations();
+                } else if (action === 'clear') {
+                    await clearHuoltoConversation(conv.id);
+                }
+                menu.remove();
+            });
+            setTimeout(() => {
+                document.addEventListener('click', function handler() { menu.remove(); document.removeEventListener('click', handler); });
+            }, 10);
+        }
+        function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+        function scrollToBottom() { messagesArea.scrollTop = messagesArea.scrollHeight; }
+        messageInput.addEventListener('input', function() { this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 140) + 'px'; });
+        
+        // Event Listeners
+        sendBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+        newChatBtn.addEventListener('click', createNewConversation);
+        vstBtn.addEventListener('click', showVSTModal);
+        studioBtn.addEventListener('click', showStudioSetupModal);
+        settingsBtn.addEventListener('click', showSettingsModal);
+        reaperStatus.addEventListener('click', showSettingsModal);
+        document.getElementById('hipareAboutBtn').addEventListener('click', showHipareAboutModal);
+
+        // ============================================
+        // HIPARE ABOUT MODAL
+        // ============================================
+        function showHipareAboutModal() {
+            // Close sidebar
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebarOverlay').classList.remove('visible');
+
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.innerHTML = `
+                <div class="modal" style="max-width: 520px;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <img src="Hipare_logo.png" alt="Hipare" style="width: 80px; height: 80px; border-radius: 16px; margin-bottom: 8px;">
+                        <div style="font-family: 'Rubik Mono One', monospace; font-size: 1.6rem; color: var(--neon-bright); text-shadow: 0 0 30px rgba(162, 117, 72, 0.4);">
+                            HIPARE
+                        </div>
+                    </div>
+                    <div style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.8; margin-bottom: 20px;">
+                        ${t('onboarding.step4_text_1')}
+                        <br><br>
+                        ${t('onboarding.step4_text_2')}
+                        <br><br>
+                        ${t('onboarding.step4_text_3')}
+                    </div>
+                    <a href="https://buymeacoffee.com/hipare" class="onboarding-coffee" target="_blank" style="display: block; text-align: center; padding: 14px; background: rgba(162, 117, 72, 0.1); border: 1px solid var(--border-subtle); border-radius: 12px; color: var(--neon-bright); text-decoration: none; font-size: 0.9rem; margin-bottom: 16px;">
+                        ${t('onboarding.coffee_text')}
+                    </a>
+                    <div style="padding-top: 16px; border-top: 1px solid var(--border-subtle); font-size: 0.75rem; color: var(--text-muted); line-height: 1.6;">
+                        ${t('about.feedback')} <a href="mailto:hipare@proton.me" style="color: var(--neon-primary); text-decoration: none;">hipare@proton.me</a><br>
+                        ${t('about.bg_credit')} <a href="https://unsplash.com/@arnaudgirault" target="_blank" style="color: var(--neon-primary); text-decoration: none;">Arnaud Girault</a> on <a href="https://unsplash.com" target="_blank" style="color: var(--neon-primary); text-decoration: none;">Unsplash</a>
+                    </div>
+                    <button class="close-modal-btn" id="closeHipareAbout" style="margin-top: 16px;">${t('buttons.close')}</button>
+                    <button class="save-modal-btn" id="resetOnboardingBtn2"
+                            style="background: transparent; border: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 0.8rem; padding: 10px; margin-top: 8px;">
+                        ${t('onboarding.show_again')}
+                    </button>
+                </div>`;
+            document.body.appendChild(overlay);
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+            document.getElementById('closeHipareAbout').addEventListener('click', () => overlay.remove());
+            document.getElementById('resetOnboardingBtn2').addEventListener('click', async () => {
+                await fetch('/api/onboarding-reset', { method: 'POST' });
+                overlay.remove();
+                await showOnboarding();
+                await updateModelDropdown();
+            });
+        }
+
+        // ============================================
+        // ONBOARDING FLOW
+        // ============================================
+        async function checkAndShowOnboarding() {
+            try {
+                const resp = await fetch('/api/onboarding-status');
+                const data = await resp.json();
+                if (!data.completed) {
+                    await showOnboarding();
+                }
+            } catch (e) {
+                console.error('Onboarding check failed:', e);
+            }
+        }
+
+        function showOnboarding() {
+            return new Promise((resolve) => {
+                let currentStep = 0;
+                const totalSteps = 4;
+                let onboardingData = {
+                    apiKeys: {},
+                    studioSetup: '',
+                    selectedModel: ''
+                };
+
+                const overlay = document.createElement('div');
+                overlay.className = 'onboarding-overlay';
+
+                function renderStep() {
+                    const dots = Array.from({length: totalSteps}, (_, i) => {
+                        const cls = i < currentStep ? 'done' : (i === currentStep ? 'active' : '');
+                        return `<div class="onboarding-step-dot ${cls}"></div>`;
+                    }).join('');
+
+                    const stepsHtml = `<div class="onboarding-steps">${dots}</div>`;
+
+                    if (currentStep === 0) {
+                        const addedKeysHtml = Object.entries(onboardingData.apiKeys).map(([k, v]) =>
+                            `<div class="ob-added-key" data-key="${k}" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.3);border-radius:8px;margin-bottom:8px;">
+                                <span style="font-size:0.85rem;color:var(--text-primary);">${k.replace('_API_KEY','').replace('_KEY','')} <span style="color:var(--text-muted);">••••${v.slice(-4)}</span></span>
+                                <button class="ob-remove-key" data-key="${k}" style="background:none;border:none;color:var(--error);cursor:pointer;font-size:1.1rem;">✕</button>
+                            </div>`
+                        ).join('');
+
+                        overlay.innerHTML = `
+                            <div class="onboarding-card">
+                                ${stepsHtml}
+                                <div class="onboarding-title">${t('onboarding.step1_title')}</div>
+                                <p class="onboarding-subtitle">
+                                    ${t('onboarding.step1_description')}
+                                </p>
+                                <div id="ob-added-keys">${addedKeysHtml}</div>
+                                <div class="onboarding-field">
+                                    <label>${t('onboarding.api_key_label')}</label>
+                                    <input type="password" class="modal-input" id="ob-key-input" placeholder="${t('onboarding.api_key_placeholder')}" style="margin-bottom:8px;">
+                                </div>
+                                <div class="onboarding-field">
+                                    <label>${t('onboarding.provider_label')}</label>
+                                    <select class="modal-input" id="ob-provider-select" style="cursor:pointer;">
+                                        <option value="GROQ_API_KEY">Groq — console.groq.com</option>
+                                        <option value="GOOGLE_API_KEY">Google Gemini — aistudio.google.com</option>
+                                        <option value="OPENROUTER_API_KEY">OpenRouter — openrouter.ai</option>
+                                        <option value="OPENAI_API_KEY">OpenAI — platform.openai.com</option>
+                                        <option value="ANTHROPIC_API_KEY">Anthropic — console.anthropic.com</option>
+                                        <option value="MISTRAL_API_KEY">Mistral — console.mistral.ai</option>
+                                        <option value="TOGETHER_API_KEY">Together AI — api.together.xyz</option>
+                                        <option value="DEEPSEEK_API_KEY">DeepSeek — platform.deepseek.com</option>
+                                        <option value="PERPLEXITY_API_KEY">Perplexity — perplexity.ai</option>
+                                        <option value="COHERE_API_KEY">Cohere — dashboard.cohere.com</option>
+                                    </select>
+                                </div>
+                                <button class="btn-next" id="ob-add-key" style="margin-bottom:16px;flex:none;width:100%;background:rgba(162,117,72,0.2);border:1px solid var(--border-active);color:var(--neon-bright);">
+                                    ${t('onboarding.add_key')}
+                                </button>
+                                <div id="ob-key-msg" style="display:none;padding:8px 12px;border-radius:8px;font-size:0.85rem;margin-bottom:12px;"></div>
+                                <div class="onboarding-buttons">
+                                    <button class="btn-skip" id="ob-skip">${t('buttons.skip')}</button>
+                                    <button class="btn-next" id="ob-next">${t('buttons.continue')}</button>
+                                </div>
+                            </div>`;
+
+                        document.getElementById('ob-add-key').onclick = () => {
+                            const input = document.getElementById('ob-key-input');
+                            const select = document.getElementById('ob-provider-select');
+                            const msg = document.getElementById('ob-key-msg');
+                            const val = input.value.trim();
+                            if (!val) {
+                                msg.style.display = 'block';
+                                msg.style.background = 'rgba(248,113,113,0.15)';
+                                msg.style.color = 'var(--error)';
+                                msg.textContent = t('onboarding.key_empty_error');
+                                return;
+                            }
+                            onboardingData.apiKeys[select.value] = val;
+                            input.value = '';
+                            msg.style.display = 'block';
+                            msg.style.background = 'rgba(74,222,128,0.15)';
+                            msg.style.color = 'var(--success)';
+                            msg.textContent = '✓ ' + select.value.replace('_API_KEY','').replace('_KEY','') + ' ' + t('onboarding.key_added');
+                            renderStep(); // re-render to show added key
+                        };
+
+                        overlay.querySelectorAll('.ob-remove-key').forEach(btn => {
+                            btn.onclick = () => {
+                                delete onboardingData.apiKeys[btn.dataset.key];
+                                renderStep();
+                            };
+                        });
+
+                        document.getElementById('ob-skip').onclick = () => { currentStep++; renderStep(); };
+                        document.getElementById('ob-next').onclick = async () => {
+                            if (Object.keys(onboardingData.apiKeys).length > 0) {
+                                await fetch('/api/api-keys', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(onboardingData.apiKeys)
+                                });
+                            }
+                            currentStep++;
+                            renderStep();
+                        };
+
+                    } else if (currentStep === 1) {
+                        overlay.innerHTML = `
+                            <div class="onboarding-card">
+                                ${stepsHtml}
+                                <div class="onboarding-title">${t('onboarding.step2_title')}</div>
+                                <p class="onboarding-subtitle">
+                                    ${t('onboarding.step2_description')}
+                                </p>
+                                <textarea class="studio-input" id="ob-studio"
+                                    placeholder="${t('onboarding.step2_placeholder')}"
+                                    style="min-height: 120px;">${onboardingData.studioSetup}</textarea>
+                                <div class="onboarding-buttons">
+                                    <button class="btn-skip" id="ob-skip">${t('buttons.skip')}</button>
+                                    <button class="btn-next" id="ob-next">${t('buttons.continue')}</button>
+                                </div>
+                            </div>`;
+
+                        document.getElementById('ob-skip').onclick = () => { currentStep++; renderStep(); };
+                        document.getElementById('ob-next').onclick = async () => {
+                            const desc = document.getElementById('ob-studio').value.trim();
+                            onboardingData.studioSetup = desc;
+                            if (desc) {
+                                await fetch('/api/studio-setup', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ description: desc })
+                                });
+                            }
+                            currentStep++;
+                            renderStep();
+                        };
+
+                    } else if (currentStep === 2) {
+                        const hasGroq = !!onboardingData.apiKeys.GROQ_API_KEY;
+                        const hasGoogle = !!onboardingData.apiKeys.GOOGLE_API_KEY;
+                        const hasOpenRouter = !!onboardingData.apiKeys.OPENROUTER_API_KEY;
+                        const hasAnyKeys = Object.keys(onboardingData.apiKeys).length > 0;
+
+                        const models = [
+                            { id: 'llama-3.3-70b', name: 'Llama 3.3 70B', provider: 'Groq', icon: '🦙', enabled: hasGroq },
+                            { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', provider: 'Google', icon: '⚡', enabled: hasGoogle },
+                            { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', provider: 'Google', icon: '👑', enabled: hasGoogle },
+                            { id: 'deepseek-chat-v3', name: 'DeepSeek V3', provider: 'OpenRouter', icon: '🔮', enabled: hasOpenRouter },
+                            { id: 'claude-3.5-haiku', name: 'Claude 3.5 Haiku', provider: 'OpenRouter', icon: '📝', enabled: hasOpenRouter },
+                            { id: 'mistral-small', name: 'Mistral Small', provider: 'OpenRouter', icon: '🌬️', enabled: hasOpenRouter }
+                        ];
+
+                        const modelsHtml = models.map(m => `
+                            <div class="onboarding-model-item ${m.enabled ? '' : 'disabled'} ${onboardingData.selectedModel === m.id ? 'selected' : ''}"
+                                 data-model-id="${m.id}" data-enabled="${m.enabled}">
+                                <div class="model-name">${m.icon} ${m.name}</div>
+                                <div class="model-provider">${m.provider}</div>
+                            </div>
+                        `).join('');
+
+                        overlay.innerHTML = `
+                            <div class="onboarding-card">
+                                ${stepsHtml}
+                                <div class="onboarding-title">${t('onboarding.step3_title')}</div>
+                                <p class="onboarding-subtitle">
+                                    ${hasAnyKeys ? t('onboarding.step3_has_keys') : t('onboarding.step3_no_keys')}
+                                </p>
+                                <div class="onboarding-model-grid">${modelsHtml}</div>
+                                <div class="onboarding-buttons">
+                                    <button class="btn-next" id="ob-next" style="flex: 1;">${t('buttons.continue')}</button>
+                                </div>
+                            </div>`;
+
+                        overlay.querySelectorAll('.onboarding-model-item').forEach(item => {
+                            item.addEventListener('click', () => {
+                                if (item.dataset.enabled === 'false') return;
+                                overlay.querySelectorAll('.onboarding-model-item').forEach(i => i.classList.remove('selected'));
+                                item.classList.add('selected');
+                                onboardingData.selectedModel = item.dataset.modelId;
+                            });
+                        });
+
+                        document.getElementById('ob-next').onclick = async () => {
+                            if (onboardingData.selectedModel) {
+                                await fetch('/api/selected-models', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ models: [onboardingData.selectedModel] })
+                                });
+                            }
+                            currentStep++;
+                            renderStep();
+                        };
+
+                    } else if (currentStep === 3) {
+                        overlay.innerHTML = `
+                            <div class="onboarding-card" style="text-align: center;">
+                                ${stepsHtml}
+                                <img src="Hipare_logo.png" alt="Hipare" style="width: 90px; height: 90px; border-radius: 18px; margin-bottom: 10px;">
+                                <div style="font-family: 'Rubik Mono One', monospace; font-size: 1.8rem; color: var(--neon-bright); margin-bottom: 8px; text-shadow: 0 0 30px rgba(162, 117, 72, 0.4);">
+                                    HIPARE
+                                </div>
+                                <div class="onboarding-about-text" style="text-align: left;">
+                                    ${t('onboarding.step4_text_1')}
+                                    <br><br>
+                                    ${t('onboarding.step4_text_2')}
+                                    <br><br>
+                                    ${t('onboarding.step4_text_3')}
+                                </div>
+                                <a href="https://buymeacoffee.com/hipare" class="onboarding-coffee" target="_blank">
+                                    ${t('onboarding.coffee_text')}
+                                </a>
+                                <div class="onboarding-buttons">
+                                    <button class="btn-next" id="ob-finish" style="flex: 1; font-size: 1rem; padding: 16px;">
+                                        ${t('onboarding.start_using')}
+                                    </button>
+                                </div>
+                            </div>`;
+
+                        document.getElementById('ob-finish').onclick = async () => {
+                            await fetch('/api/onboarding-complete', { method: 'POST' });
+                            overlay.style.opacity = '0';
+                            overlay.style.transition = 'opacity 0.4s';
+                            setTimeout(() => {
+                                overlay.remove();
+                                resolve();
+                            }, 400);
+                        };
+                    }
+                }
+
+                document.body.appendChild(overlay);
+                renderStep();
+            });
+        }
+
+        // Init
+        async function init() {
+            // Load language setting first
+            try {
+                const langResp = await fetch('/api/language');
+                const langData = await langResp.json();
+                await loadLocale(langData.language || 'fi');
+            } catch (e) {
+                await loadLocale('fi');
+            }
+            applyLocaleToUI();
+            await checkAndShowOnboarding();
+            await loadConversations();
+            await loadVSTPlugins();
+            await loadReaperInfo();
+            await updateModelDropdown();
+            console.log(t('app.version_loaded'));
+        }
+        init();
+    </script>
+</body>
+</html>
