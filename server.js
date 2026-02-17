@@ -1760,9 +1760,13 @@ async function checkReaperHealth() {
 // ============================================
 // DATABASE
 // ============================================
-const db = new sqlite3.Database('./hipare.db', (err) => {
+// Use AppData for database in installed app, local dir for dev
+const dbDir = process.env.APPDATA ? path.join(process.env.APPDATA, 'Hipare') : '.';
+if (dbDir !== '.' && !fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+const dbPath = path.join(dbDir, 'hipare.db');
+const db = new sqlite3.Database(dbPath, (err) => {
     if (err) console.error('Tietokantavirhe:', err.message);
-    else console.log('Tietokanta yhdistetty');
+    else console.log('Tietokanta yhdistetty:', dbPath);
 });
 
 function initializeDatabase() {
@@ -4256,7 +4260,7 @@ app.post('/api/api-keys', async (req, res) => {
 // Language API
 app.get('/api/language', async (req, res) => {
     const lang = await getSetting('ui_language');
-    res.json({ language: lang || 'fi' });
+    res.json({ language: lang || null });
 });
 
 app.post('/api/language', async (req, res) => {
@@ -4967,7 +4971,7 @@ app.post('/api/messages', async (req, res) => {
         });
 
         // Get user's language preference
-        const userLang = await getSetting('ui_language') || 'fi';
+        const userLang = await getSetting('ui_language') || 'en';
 
         // Määritä system prompt mallin mukaan
         let systemPrompt;

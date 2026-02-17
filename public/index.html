@@ -1046,7 +1046,7 @@
         let analyzeModeActive = false;
 
         // i18n - Internationalization
-        let currentLocale = 'fi';
+        let currentLocale = 'en';
         let localeData = {};
 
         async function loadLocale(lang) {
@@ -2870,16 +2870,64 @@
             });
         }
 
+        // Language selection screen for first launch
+        function showLanguageSelection() {
+            return new Promise((resolve) => {
+                const overlay = document.createElement('div');
+                overlay.className = 'onboarding-overlay';
+                overlay.innerHTML = `
+                    <div class="onboarding-modal" style="max-width:420px;text-align:center;">
+                        <div style="font-size:2.5rem;margin-bottom:12px;">🌐</div>
+                        <h2 style="color:var(--text-primary);margin-bottom:6px;font-size:1.3rem;">Choose your language</h2>
+                        <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.85rem;">Valitse kieli</p>
+                        <div style="display:flex;flex-direction:column;gap:10px;max-width:280px;margin:0 auto;">
+                            <button id="langSelectEn" style="display:flex;align-items:center;gap:12px;padding:14px 20px;background:rgba(99,102,241,0.1);border:2px solid rgba(99,102,241,0.3);border-radius:12px;color:var(--text-primary);font-size:1rem;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='rgba(99,102,241,0.7)';this.style.background='rgba(99,102,241,0.2)'" onmouseout="this.style.borderColor='rgba(99,102,241,0.3)';this.style.background='rgba(99,102,241,0.1)'">
+                                <span style="font-size:1.6rem;">🇬🇧</span>
+                                <span style="font-weight:600;">English</span>
+                            </button>
+                            <button id="langSelectFi" style="display:flex;align-items:center;gap:12px;padding:14px 20px;background:rgba(99,102,241,0.1);border:2px solid rgba(99,102,241,0.3);border-radius:12px;color:var(--text-primary);font-size:1rem;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='rgba(99,102,241,0.7)';this.style.background='rgba(99,102,241,0.2)'" onmouseout="this.style.borderColor='rgba(99,102,241,0.3)';this.style.background='rgba(99,102,241,0.1)'">
+                                <span style="font-size:1.6rem;">🇫🇮</span>
+                                <span style="font-weight:600;">Suomi</span>
+                            </button>
+                        </div>
+                        <p style="color:var(--text-muted);margin-top:18px;font-size:0.75rem;">You can change this later in Settings → Language</p>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+
+                document.getElementById('langSelectEn').addEventListener('click', async () => {
+                    overlay.remove();
+                    await setLanguage('en');
+                    resolve('en');
+                });
+                document.getElementById('langSelectFi').addEventListener('click', async () => {
+                    overlay.remove();
+                    await setLanguage('fi');
+                    resolve('fi');
+                });
+            });
+        }
+
         // Init
         async function init() {
             // Load language setting first
+            let langChosen = false;
             try {
                 const langResp = await fetch('/api/language');
                 const langData = await langResp.json();
-                await loadLocale(langData.language || 'fi');
-            } catch (e) {
-                await loadLocale('fi');
+                if (langData.language) {
+                    await loadLocale(langData.language);
+                    langChosen = true;
+                }
+            } catch (e) {}
+
+            // First launch: show language selection
+            if (!langChosen) {
+                await loadLocale('en'); // load English for the selection screen
+                const chosenLang = await showLanguageSelection();
+                await loadLocale(chosenLang);
             }
+
             applyLocaleToUI();
             await checkAndShowOnboarding();
             await loadConversations();
