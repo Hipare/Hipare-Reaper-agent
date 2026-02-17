@@ -9,31 +9,40 @@ use std::os::windows::process::CommandExt;
 struct ServerProcess(Mutex<Option<Child>>);
 
 fn start_express_server() -> Option<Child> {
-    let node = "node";
-
-    // Get the app directory - server.js is in the project root
-    let server_dir = std::env::current_exe()
+    let exe_dir = std::env::current_exe()
         .ok()
-        .and_then(|p| p.parent().map(|p| p.to_path_buf()))
-        .unwrap_or_else(|| std::env::current_dir().unwrap());
+        .and_then(|p| p.parent().map(|p| p.to_path_buf()));
 
-    // In dev mode, server.js is in the project root
-    // In production, we need to find it relative to the executable
-    let possible_paths = vec![
-        server_dir.join("server.js"),
-        server_dir.join("..").join("server.js"),
-        server_dir.join("..").join("..").join("server.js"),
-        server_dir.join("..").join("..").join("..").join("server.js"),
-        // Dev mode - project root
-        std::env::current_dir().unwrap().join("server.js"),
-    ];
+    let mut paths = vec![];
 
-    let server_js = possible_paths
-        .iter()
+    if let Some(ref dir) = exe_dir {
+        // Installed app: resources are next to the exe or in subdirectories
+        paths.push(dir.join("server.js"));
+        paths.push(dir.join("resources").join("server.js"));
+        paths.push(dir.join("..").join("server.js"));
+        paths.push(dir.join("..").join("..").join("server.js"));
+        paths.push(dir.join("..").join("..").join("..").join("server.js"));
+    }
+
+    // Dev mode: project root
+    if let Ok(cwd) = std::env::current_dir() {
+        paths.push(cwd.join("server.js"));
+    }
+
+    let server_js = paths.iter()
         .find(|p| p.exists())
         .cloned()
         .unwrap_or_else(|| {
-            eprintln!("WARNING: server.js not found, trying current dir");
+            eprintln!("WARNING: server.js not found in any location");
+            if let Some(ref dir) = exe_dir {
+                // Log what IS in the exe directory for debugging
+                if let Ok(entries) = std::fs::read_dir(dir) {
+                    eprintln!("Files in exe dir {:?}:", dir);
+                    for entry in entries.flatten() {
+                        eprintln!("  {:?}", entry.file_name());
+                    }
+                }
+            }
             std::env::current_dir().unwrap().join("server.js")
         });
 
@@ -42,7 +51,7 @@ fn start_express_server() -> Option<Child> {
     println!("Starting Express server: {:?}", server_js);
     println!("Working directory: {:?}", working_dir);
 
-    let mut cmd = Command::new(node);
+    let mut cmd = Command::new("node");
     cmd.arg(&server_js).current_dir(&working_dir);
 
     #[cfg(target_os = "windows")]

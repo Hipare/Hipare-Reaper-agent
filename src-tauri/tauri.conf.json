@@ -37,7 +37,18 @@
       "icons/128x128@2x.png",
       "icons/icon.ico"
     ],
-    "resources": [],
+    "resources": [
+      "../server.js",
+      "../package.json",
+      "../package-lock.json",
+      "../reaper_bridge.py",
+      "../audio_analyzer.py",
+      "../.env.example",
+      "../public/**/*",
+      "../knowledge/**/*",
+      "../total-reaper-mcp/**/*",
+      "../node_modules/**/*"
+    ],
     "windows": {
       "nsis": {
         "installMode": "currentUser"
