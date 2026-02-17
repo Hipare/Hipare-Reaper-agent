@@ -1524,43 +1524,30 @@
                                 <p style="color: var(--text-muted); font-size: 0.8rem;">...</p>
                             </div>
 
-                            <label class="modal-label">Groq API</label>
+                            <label class="modal-label">${t('settings.api_key_provider') || 'Provider'}</label>
+                            <select class="modal-input" id="settingsProviderSelect" style="cursor:pointer;margin-bottom:8px;">
+                                <option value="GROQ_API_KEY">Groq — console.groq.com</option>
+                                <option value="GOOGLE_API_KEY">Google Gemini — aistudio.google.com</option>
+                                <option value="OPENROUTER_API_KEY">OpenRouter — openrouter.ai</option>
+                                <option value="OPENAI_API_KEY">OpenAI — platform.openai.com</option>
+                                <option value="ANTHROPIC_API_KEY">Anthropic — console.anthropic.com</option>
+                                <option value="MISTRAL_API_KEY">Mistral — console.mistral.ai</option>
+                                <option value="TOGETHER_API_KEY">Together AI — api.together.xyz</option>
+                                <option value="DEEPSEEK_API_KEY">DeepSeek — platform.deepseek.com</option>
+                                <option value="PERPLEXITY_API_KEY">Perplexity — perplexity.ai</option>
+                                <option value="COHERE_API_KEY">Cohere — dashboard.cohere.com</option>
+                            </select>
+
+                            <label class="modal-label">API Key</label>
                             <div style="display: flex; gap: 8px; align-items: center;">
-                                <input type="password" class="modal-input" id="groqApiKeyInput"
-                                       placeholder="gsk_..." style="flex: 1;">
-                                <button class="toggle-key-btn" data-target="groqApiKeyInput"
+                                <input type="password" class="modal-input" id="settingsApiKeyInput"
+                                       placeholder="${t('onboarding.api_key_placeholder')}" style="flex: 1;">
+                                <button class="toggle-key-btn" data-target="settingsApiKeyInput"
                                         style="padding: 8px 12px; background: rgba(162,117,72,0.2); border: 1px solid var(--border-subtle);
                                                color: var(--text-primary); border-radius: 6px; cursor: pointer; font-size: 0.8rem;">👁</button>
                             </div>
-                            <p class="modal-text" style="font-size: 0.72rem; margin-top: -8px; color: var(--text-muted);">
-                                ${t('settings.provider_groq_hint')} <a href="https://console.groq.com" target="_blank" style="color: var(--neon-primary);">console.groq.com</a>
-                            </p>
 
-                            <label class="modal-label" style="margin-top: 12px;">Google Gemini API</label>
-                            <div style="display: flex; gap: 8px; align-items: center;">
-                                <input type="password" class="modal-input" id="googleApiKeyInput"
-                                       placeholder="AIza..." style="flex: 1;">
-                                <button class="toggle-key-btn" data-target="googleApiKeyInput"
-                                        style="padding: 8px 12px; background: rgba(162,117,72,0.2); border: 1px solid var(--border-subtle);
-                                               color: var(--text-primary); border-radius: 6px; cursor: pointer; font-size: 0.8rem;">👁</button>
-                            </div>
-                            <p class="modal-text" style="font-size: 0.72rem; margin-top: -8px; color: var(--text-muted);">
-                                ${t('settings.provider_google_hint')} <a href="https://aistudio.google.com" target="_blank" style="color: var(--neon-primary);">aistudio.google.com</a>
-                            </p>
-
-                            <label class="modal-label" style="margin-top: 12px;">OpenRouter API</label>
-                            <div style="display: flex; gap: 8px; align-items: center;">
-                                <input type="password" class="modal-input" id="openrouterApiKeyInput"
-                                       placeholder="sk-or-v1-..." style="flex: 1;">
-                                <button class="toggle-key-btn" data-target="openrouterApiKeyInput"
-                                        style="padding: 8px 12px; background: rgba(162,117,72,0.2); border: 1px solid var(--border-subtle);
-                                               color: var(--text-primary); border-radius: 6px; cursor: pointer; font-size: 0.8rem;">👁</button>
-                            </div>
-                            <p class="modal-text" style="font-size: 0.72rem; margin-top: -8px; color: var(--text-muted);">
-                                ${t('settings.provider_openrouter_hint')} <a href="https://openrouter.ai" target="_blank" style="color: var(--neon-primary);">openrouter.ai</a>
-                            </p>
-
-                            <button class="save-modal-btn" id="saveApiKeysBtn" style="margin-top: 15px; background: rgba(162, 117, 72, 0.3);">
+                            <button class="save-modal-btn" id="saveApiKeysBtn" style="margin-top: 12px; background: rgba(162, 117, 72, 0.3);">
                                 ${t('settings.save_api_keys')}
                             </button>
                             <div id="apiKeySaveResult" style="margin-top: 10px; font-size: 0.85rem;"></div>
@@ -2049,33 +2036,8 @@
                 const selectedModels = Array.from(document.querySelectorAll('input[name="model"]:checked'))
                     .map(cb => cb.value);
 
-                // Tarkista onko API-avaimia syötetty
-                const groqVal = document.getElementById('groqApiKeyInput')?.value?.trim() || '';
-                const googleVal = document.getElementById('googleApiKeyInput')?.value?.trim() || '';
-                const openrouterVal = document.getElementById('openrouterApiKeyInput')?.value?.trim() || '';
-                const hasNewApiKeys = groqVal || googleVal || openrouterVal;
-
-                // Jos API-avaimia syötetty, tallenna ne ensin
-                if (hasNewApiKeys) {
-                    const keys = {};
-                    if (groqVal) keys.GROQ_API_KEY = groqVal;
-                    if (googleVal) keys.GOOGLE_API_KEY = googleVal;
-                    if (openrouterVal) keys.OPENROUTER_API_KEY = openrouterVal;
-
-                    try {
-                        await fetch('/api/api-keys', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(keys)
-                        });
-                        console.log('✅ API-avaimet tallennettu');
-                    } catch (apiErr) {
-                        console.error('❌ API-avainten tallennus epäonnistui:', apiErr);
-                    }
-                }
-
-                // Tarkista mallivalinta vain jos ei ole uusia API-avaimia
-                if (selectedModels.length === 0 && !hasNewApiKeys) {
+                // API keys are now saved separately via the API Keys tab
+                if (selectedModels.length === 0) {
                     showMessage('⚠️ ' + t('settings.select_model_error'));
                     return;
                 }
@@ -2113,33 +2075,29 @@
         }
 
         function setupApiKeys() {
-            // Lataa avainten tila
+            // Load and display all configured keys
             (async () => {
                 try {
                     const resp = await fetch('/api/api-keys');
                     const data = await resp.json();
                     const statusDiv = document.getElementById('apiKeysStatus');
                     if (statusDiv) {
-                        statusDiv.innerHTML = `
-                            <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem;">
-                                <div style="display: flex; justify-content: space-between;">
-                                    <span>Groq</span>
-                                    <span style="color: ${data.groq ? '#4CAF50' : '#ff5252'};">${data.groq ? t('settings.api_key_set') : t('settings.api_key_missing')}</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between;">
-                                    <span>Google Gemini</span>
-                                    <span style="color: ${data.google ? '#4CAF50' : '#ff5252'};">${data.google ? t('settings.api_key_set') : t('settings.api_key_missing')}</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between;">
-                                    <span>OpenRouter</span>
-                                    <span style="color: ${data.openrouter ? '#4CAF50' : '#ff5252'};">${data.openrouter ? t('settings.api_key_set') : t('settings.api_key_missing')}</span>
-                                </div>
-                            </div>`;
+                        const keys = data.keys || {};
+                        const keyEntries = Object.entries(keys);
+                        if (keyEntries.length === 0) {
+                            statusDiv.innerHTML = `<p style="color:var(--text-muted);font-size:0.8rem;">${t('settings.no_keys_configured') || 'No API keys configured yet'}</p>`;
+                        } else {
+                            statusDiv.innerHTML = `
+                                <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem;">
+                                    ${keyEntries.map(([key, info]) => `
+                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                            <span>${key.replace('_API_KEY','').replace('_KEY','')}</span>
+                                            <span style="color: #4CAF50; font-size: 0.8rem;">${info.masked}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>`;
+                        }
                     }
-                    // Pre-fill masked values
-                    if (data.groq) document.getElementById('groqApiKeyInput').placeholder = data.groq_masked;
-                    if (data.google) document.getElementById('googleApiKeyInput').placeholder = data.google_masked;
-                    if (data.openrouter) document.getElementById('openrouterApiKeyInput').placeholder = data.openrouter_masked;
                 } catch (e) {
                     console.error('API key status load failed:', e);
                 }
@@ -2156,27 +2114,23 @@
                 });
             });
 
-            // Save API keys
+            // Save API key (single provider + key)
             const saveApiBtn = document.getElementById('saveApiKeysBtn');
             if (saveApiBtn) {
                 saveApiBtn.addEventListener('click', async () => {
                     const resultDiv = document.getElementById('apiKeySaveResult');
-                    const keys = {};
-                    const groqVal = document.getElementById('groqApiKeyInput').value.trim();
-                    const googleVal = document.getElementById('googleApiKeyInput').value.trim();
-                    const openrouterVal = document.getElementById('openrouterApiKeyInput').value.trim();
+                    const provider = document.getElementById('settingsProviderSelect').value;
+                    const keyVal = document.getElementById('settingsApiKeyInput').value.trim();
 
-                    if (groqVal) keys.GROQ_API_KEY = groqVal;
-                    if (googleVal) keys.GOOGLE_API_KEY = googleVal;
-                    if (openrouterVal) keys.OPENROUTER_API_KEY = openrouterVal;
-
-                    if (Object.keys(keys).length === 0) {
+                    if (!keyVal) {
                         if (resultDiv) {
                             resultDiv.innerHTML = '<span style="color: #ff9800;">' + t('settings.enter_api_key_error') + '</span>';
                             setTimeout(() => { resultDiv.innerHTML = ''; }, 3000);
                         }
                         return;
                     }
+
+                    const keys = { [provider]: keyVal };
 
                     try {
                         saveApiBtn.disabled = true;
@@ -2189,12 +2143,10 @@
                         const result = await resp.json();
                         if (result.success) {
                             if (resultDiv) {
-                                resultDiv.innerHTML = '<span style="color: #4CAF50;">' + t('settings.api_keys_saved') + '</span>';
+                                resultDiv.innerHTML = '<span style="color: #4CAF50;">✓ ' + provider.replace('_API_KEY','').replace('_KEY','') + ' ' + (t('settings.api_keys_saved') || 'saved') + '</span>';
                             }
-                            document.getElementById('groqApiKeyInput').value = '';
-                            document.getElementById('googleApiKeyInput').value = '';
-                            document.getElementById('openrouterApiKeyInput').value = '';
-                            setupApiKeys();
+                            document.getElementById('settingsApiKeyInput').value = '';
+                            setupApiKeys(); // refresh status
                         } else {
                             if (resultDiv) {
                                 resultDiv.innerHTML = '<span style="color: #ff5252;">' + t('settings.api_keys_save_failed') + ' ' + (result.error || t('errors.unknown')) + '</span>';
@@ -2777,30 +2729,40 @@
                         const hasOpenRouter = !!onboardingData.apiKeys.OPENROUTER_API_KEY;
                         const hasAnyKeys = Object.keys(onboardingData.apiKeys).length > 0;
 
-                        const models = [
-                            { id: 'llama-3.3-70b', name: 'Llama 3.3 70B', provider: 'Groq', icon: '🦙', enabled: hasGroq },
-                            { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', provider: 'Google', icon: '⚡', enabled: hasGoogle },
-                            { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', provider: 'Google', icon: '👑', enabled: hasGoogle },
-                            { id: 'deepseek-chat-v3', name: 'DeepSeek V3', provider: 'OpenRouter', icon: '🔮', enabled: hasOpenRouter },
-                            { id: 'claude-3.5-haiku', name: 'Claude 3.5 Haiku', provider: 'OpenRouter', icon: '📝', enabled: hasOpenRouter },
-                            { id: 'mistral-small', name: 'Mistral Small', provider: 'OpenRouter', icon: '🌬️', enabled: hasOpenRouter }
+                        // Only show models the user can actually use
+                        const allModels = [
+                            { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', provider: 'Google', icon: '⚡', needs: 'GOOGLE_API_KEY', desc: 'Fast & smart' },
+                            { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', provider: 'Google', icon: '👑', needs: 'GOOGLE_API_KEY', desc: 'Best quality' },
+                            { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', provider: 'Google', icon: '🤖', needs: 'GOOGLE_API_KEY', desc: 'Good all-rounder' },
+                            { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B', provider: 'Groq', icon: '🦙', needs: 'GROQ_API_KEY', desc: 'Fast & free' },
+                            { id: 'deepseek/deepseek-chat-v3-0324:free', name: 'DeepSeek V3', provider: 'OpenRouter', icon: '🔮', needs: 'OPENROUTER_API_KEY', desc: 'Free tier' },
+                            { id: 'anthropic/claude-3.5-haiku', name: 'Claude 3.5 Haiku', provider: 'OpenRouter', icon: '📝', needs: 'OPENROUTER_API_KEY', desc: 'Fast & precise' },
+                            { id: 'mistralai/mistral-small-3.1-24b-instruct:free', name: 'Mistral Small', provider: 'OpenRouter', icon: '🌬️', needs: 'OPENROUTER_API_KEY', desc: 'Free tier' }
                         ];
 
-                        const modelsHtml = models.map(m => `
-                            <div class="onboarding-model-item ${m.enabled ? '' : 'disabled'} ${onboardingData.selectedModel === m.id ? 'selected' : ''}"
-                                 data-model-id="${m.id}" data-enabled="${m.enabled}">
+                        // Filter: only show models the user has keys for
+                        const availableModels = allModels.filter(m => !!onboardingData.apiKeys[m.needs]);
+
+                        if (!onboardingData.selectedModels) onboardingData.selectedModels = [];
+
+                        const modelsHtml = availableModels.length > 0 ? availableModels.map(m => `
+                            <div class="onboarding-model-item ${onboardingData.selectedModels.includes(m.id) ? 'selected' : ''}"
+                                 data-model-id="${m.id}" style="cursor:pointer;">
                                 <div class="model-name">${m.icon} ${m.name}</div>
-                                <div class="model-provider">${m.provider}</div>
+                                <div class="model-provider">${m.provider} — ${m.desc}</div>
                             </div>
-                        `).join('');
+                        `).join('') : `<p style="color:var(--text-muted);text-align:center;padding:20px;font-size:0.85rem;">${t('onboarding.step3_no_keys')}</p>`;
+
+                        const selCount = onboardingData.selectedModels.length;
 
                         overlay.innerHTML = `
                             <div class="onboarding-card">
                                 ${stepsHtml}
                                 <div class="onboarding-title">${t('onboarding.step3_title')}</div>
                                 <p class="onboarding-subtitle">
-                                    ${hasAnyKeys ? t('onboarding.step3_has_keys') : t('onboarding.step3_no_keys')}
+                                    ${availableModels.length > 0 ? t('onboarding.step3_has_keys') : t('onboarding.step3_no_keys')}
                                 </p>
+                                ${availableModels.length > 0 ? `<p style="color:var(--text-muted);font-size:0.75rem;margin-bottom:8px;">${t('onboarding.select_1_to_5') || 'Select 1–5 models'} (${selCount}/5)</p>` : ''}
                                 <div class="onboarding-model-grid">${modelsHtml}</div>
                                 <div class="onboarding-buttons">
                                     <button class="btn-next" id="ob-next" style="flex: 1;">${t('buttons.continue')}</button>
@@ -2809,19 +2771,27 @@
 
                         overlay.querySelectorAll('.onboarding-model-item').forEach(item => {
                             item.addEventListener('click', () => {
-                                if (item.dataset.enabled === 'false') return;
-                                overlay.querySelectorAll('.onboarding-model-item').forEach(i => i.classList.remove('selected'));
-                                item.classList.add('selected');
-                                onboardingData.selectedModel = item.dataset.modelId;
+                                const id = item.dataset.modelId;
+                                const idx = onboardingData.selectedModels.indexOf(id);
+                                if (idx >= 0) {
+                                    onboardingData.selectedModels.splice(idx, 1);
+                                    item.classList.remove('selected');
+                                } else if (onboardingData.selectedModels.length < 5) {
+                                    onboardingData.selectedModels.push(id);
+                                    item.classList.add('selected');
+                                }
+                                // Update counter
+                                const counter = overlay.querySelector('.onboarding-subtitle + p');
+                                if (counter) counter.innerHTML = `${t('onboarding.select_1_to_5') || 'Select 1–5 models'} (${onboardingData.selectedModels.length}/5)`;
                             });
                         });
 
                         document.getElementById('ob-next').onclick = async () => {
-                            if (onboardingData.selectedModel) {
+                            if (onboardingData.selectedModels.length > 0) {
                                 await fetch('/api/selected-models', {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ models: [onboardingData.selectedModel] })
+                                    body: JSON.stringify({ models: onboardingData.selectedModels })
                                 });
                             }
                             currentStep++;

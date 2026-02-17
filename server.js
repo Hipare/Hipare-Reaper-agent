@@ -4185,13 +4185,42 @@ app.get('/api/api-keys', (req, res) => {
         if (key.length <= 8) return '****';
         return key.substring(0, 4) + '...' + key.substring(key.length - 4);
     };
+
+    // Read all API keys from .env file to support any provider
+    const allKeys = {};
+    try {
+        const envPath = path.join(__dirname, '.env');
+        const envContent = fs.readFileSync(envPath, 'utf8');
+        for (const line of envContent.split('\n')) {
+            const trimmed = line.trim();
+            if (trimmed && !trimmed.startsWith('#')) {
+                const eqIdx = trimmed.indexOf('=');
+                if (eqIdx > 0) {
+                    const key = trimmed.substring(0, eqIdx);
+                    const val = trimmed.substring(eqIdx + 1);
+                    if ((key.endsWith('_API_KEY') || key.endsWith('_KEY')) && val) {
+                        allKeys[key] = { set: true, masked: maskKey(val) };
+                    }
+                }
+            }
+        }
+    } catch (e) {}
+
+    // Also include in-memory keys
+    if (apiKeys.groq) allKeys.GROQ_API_KEY = { set: true, masked: maskKey(apiKeys.groq) };
+    if (apiKeys.google) allKeys.GOOGLE_API_KEY = { set: true, masked: maskKey(apiKeys.google) };
+    if (apiKeys.openrouter) allKeys.OPENROUTER_API_KEY = { set: true, masked: maskKey(apiKeys.openrouter) };
+
     res.json({
+        // Legacy fields for backward compatibility
         groq: !!apiKeys.groq,
         google: !!apiKeys.google,
         openrouter: !!apiKeys.openrouter,
         groq_masked: maskKey(apiKeys.groq),
         google_masked: maskKey(apiKeys.google),
-        openrouter_masked: maskKey(apiKeys.openrouter)
+        openrouter_masked: maskKey(apiKeys.openrouter),
+        // New: all configured keys
+        keys: allKeys
     });
 });
 
@@ -4250,7 +4279,25 @@ app.post('/api/api-keys', async (req, res) => {
         fs.writeFileSync(envPath, newEnvLines.join('\n'));
         console.log('API-avaimet päivitetty .env-tiedostoon');
 
-        res.json({ success: true, message: 'API-avaimet tallennettu. Käynnistä palvelin uudelleen.' });
+        // Update in-memory keys immediately (no restart needed)
+        for (const [key, value] of Object.entries(newKeys)) {
+            if (key === 'GROQ_API_KEY' && value) { apiKeys.groq = value; process.env.GROQ_API_KEY = value; }
+            if (key === 'GOOGLE_API_KEY' && value) { apiKeys.google = value; process.env.GOOGLE_API_KEY = value; }
+            if (key === 'OPENROUTER_API_KEY' && value) { apiKeys.openrouter = value; process.env.OPENROUTER_API_KEY = value; }
+        }
+        // Rebuild Google API_CONFIG URLs with new key
+        for (const [id, config] of Object.entries(API_CONFIG)) {
+            if (config.type === 'google' && apiKeys.google) {
+                const modelName = id === 'gemini' ? 'gemini-2.0-flash' : id;
+                API_CONFIG[id].url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKeys.google}`;
+            }
+        }
+        console.log('API Keys (updated): ' +
+            `Google: ${apiKeys.google ? '✓' : '✗'} | ` +
+            `OpenRouter: ${apiKeys.openrouter ? '✓' : '✗'} | ` +
+            `Groq: ${apiKeys.groq ? '✓' : '✗'}`);
+
+        res.json({ success: true, message: 'API keys saved and activated.' });
     } catch (error) {
         console.error('API-avainten tallennus epäonnistui:', error);
         res.status(500).json({ success: false, error: error.message });
