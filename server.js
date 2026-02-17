@@ -3887,7 +3887,7 @@ function isHuoltoConversation(conversationId) {
 // API ROUTES
 // ============================================
 app.get('/api/test', (req, res) => {
-    res.json({ status: 'OK', message: 'Hipare backend running!', version: '5.1' });
+    res.json({ status: 'OK', message: 'Hipare backend running!', version: '1.0' });
 });
 
 app.get('/api/vst-plugins', (req, res) => {

@@ -16,7 +16,9 @@ fn start_express_server() -> Option<Child> {
     let mut paths = vec![];
 
     if let Some(ref dir) = exe_dir {
-        // Installed app: resources are next to the exe or in subdirectories
+        // NSIS installer puts resources in _up_ folder (highest priority for installed app)
+        paths.push(dir.join("_up_").join("server.js"));
+        // MSI installer / other locations
         paths.push(dir.join("server.js"));
         paths.push(dir.join("resources").join("server.js"));
         paths.push(dir.join("..").join("server.js"));
@@ -24,7 +26,7 @@ fn start_express_server() -> Option<Child> {
         paths.push(dir.join("..").join("..").join("..").join("server.js"));
     }
 
-    // Dev mode: project root
+    // Dev mode: project root (lowest priority - should not override bundled resources)
     if let Ok(cwd) = std::env::current_dir() {
         paths.push(cwd.join("server.js"));
     }
