@@ -1,0 +1,8 @@
+{
+  "identifier": "default",
+  "description": "Default capabilities for Hipare",
+  "windows": ["main"],
+  "permissions": [
+    "opener:default"
+  ]
+}

@@ -113,6 +113,7 @@ fn kill_process_tree(child: &mut Child) {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             // Start Express server
             let child = start_express_server();
