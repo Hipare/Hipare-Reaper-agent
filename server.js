@@ -4304,6 +4304,21 @@ app.post('/api/api-keys', async (req, res) => {
     }
 });
 
+// Open URL in default browser (for desktop app where target="_blank" doesn't work)
+app.post('/api/open-url', (req, res) => {
+    const { url } = req.body;
+    if (!url || !url.startsWith('http')) {
+        return res.status(400).json({ error: 'Invalid URL' });
+    }
+    const { exec } = require('child_process');
+    const cmd = process.platform === 'win32' ? `start "" "${url}"` :
+                process.platform === 'darwin' ? `open "${url}"` : `xdg-open "${url}"`;
+    exec(cmd, (err) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true });
+    });
+});
+
 // Language API
 app.get('/api/language', async (req, res) => {
     const lang = await getSetting('ui_language');

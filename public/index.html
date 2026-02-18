@@ -1037,17 +1037,13 @@
         // Open external links in default browser (needed for Tauri desktop app)
         document.addEventListener('click', (e) => {
             const link = e.target.closest('a[href]');
-            if (link && link.href && link.href.startsWith('http') && link.target === '_blank') {
+            if (link && link.href && link.href.startsWith('http') && !link.href.includes('localhost')) {
                 e.preventDefault();
-                // Try Tauri opener plugin first, fall back to window.open
-                if (window.__TAURI__?.opener?.openUrl) {
-                    window.__TAURI__.opener.openUrl(link.href);
-                } else if (window.__TAURI__) {
-                    // Tauri 2 with plugin
-                    import('@tauri-apps/plugin-opener').then(m => m.openUrl(link.href)).catch(() => window.open(link.href, '_blank'));
-                } else {
-                    window.open(link.href, '_blank');
-                }
+                fetch('/api/open-url', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: link.href })
+                }).catch(() => window.open(link.href, '_blank'));
             }
         });
 
